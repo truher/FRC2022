@@ -10,7 +10,7 @@ from mesa import Model
 from mesa.space import ContinuousSpace
 from mesa.time import RandomActivation
 
-from .robot import Robot
+from .agents import Robot
 
 
 class RobotFlockers(Model):
