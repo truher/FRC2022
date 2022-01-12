@@ -85,7 +85,7 @@ class Robot(Agent):
         """
 
         neighbors = self.model.space.get_neighbors(self.pos, self.vision, False)
-        self._velocity += np.random.normal(loc=0.01, scale=0.01, size=2)
+        self._velocity += np.random.normal(loc=0.00, scale=0.05, size=2)
         #self._velocity += (
         #    self.cohere(neighbors) * self.cohere_factor
         #    + self.separate(neighbors) * self.separate_factor
