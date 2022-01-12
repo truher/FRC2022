@@ -1,6 +1,6 @@
 """
-FRC
-=============================================================
+The model instantiates the environment.
+
 Uses numpy arrays to represent vectors.
 """
 

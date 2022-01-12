@@ -1,3 +1,8 @@
+"""
+The Python side of a custom visualization module for drawing agents with continuous positions.
+
+"""
+
 from mesa.visualization.ModularVisualization import VisualizationElement
 
 

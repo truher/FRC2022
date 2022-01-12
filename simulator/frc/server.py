@@ -1,3 +1,7 @@
+"""
+Sets up the visualization; uses SimpleCanvas.
+"""
+
 from mesa.visualization.ModularVisualization import ModularServer
 
 from .model import RobotFlockers

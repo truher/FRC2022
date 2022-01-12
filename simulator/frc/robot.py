@@ -1,3 +1,6 @@
+"""
+The Robot class is the main agent class.
+"""
 import numpy as np
 
 from mesa import Agent
