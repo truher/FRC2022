@@ -4,7 +4,30 @@ The Robot class is the main agent class.
 import numpy as np
 
 from mesa import Agent
+#from .model import Model
 
+class Cargo(Agent):
+    """
+    The ball.
+    """
+    def __init__(
+        self,
+        unique_id: int,
+        model: 'Model',
+        pos,
+    ) -> None:
+        """
+        Args:
+            unique_id: Unique agent identifyer.
+            pos: Starting position
+        """
+        super().__init__(unique_id, model)
+
+    def step(self):
+        """
+        Do nothing
+        """
+        pass
 
 class Robot(Agent):
     """
@@ -13,8 +36,8 @@ class Robot(Agent):
 
     def __init__(
         self,
-        unique_id,
-        model,
+        unique_id: int,
+        model: 'Model',
         pos,
         speed,
         velocity,

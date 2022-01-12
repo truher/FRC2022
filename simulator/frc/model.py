@@ -10,7 +10,7 @@ from mesa import Model
 from mesa.space import ContinuousSpace
 from mesa.time import RandomActivation
 
-from .agents import Robot
+from .agents import Cargo, Robot
 
 
 class RobotFlockers(Model):
@@ -20,7 +20,7 @@ class RobotFlockers(Model):
 
     def __init__(
         self,
-        population=100,
+        population=100, # remove this
         width=16.46, # landscape orientation
         height=8.23,
         speed=0.2,
@@ -76,6 +76,14 @@ class RobotFlockers(Model):
             )
             self.space.place_agent(robot, pos)
             self.schedule.add(robot)
+        for i in range(100,122):
+            x = self.random.random() * self.space.x_max
+            y = self.random.random() * self.space.y_max
+            pos = np.array((x, y))
+            cargo = Cargo(i, self, pos)
+            self.space.place_agent(cargo, pos)
+            self.schedule.add(cargo)
+
 
     def step(self):
         self.schedule.step()
