@@ -11,6 +11,7 @@ from mesa.space import ContinuousSpace
 from mesa.time import RandomActivation
 
 from .agents import Cargo, Robot
+from .alliance import Alliance
 
 
 class RobotFlockers(Model):
@@ -20,10 +21,6 @@ class RobotFlockers(Model):
 
     def __init__(
         self,
-        population=100, # remove this
-        width=16.46, # landscape orientation
-        height=8.23,
-        speed=0.2,
         vision=20,
         separation=2,
         cohere=0.1,
@@ -34,56 +31,68 @@ class RobotFlockers(Model):
         Create a new Flockers model.
 
         Args:
-            population: Number of robots
-            width, height: Size of the space in meters.
-            speed: How fast should the robots move.
             vision: How far around should each robot look for its neighbors
             separation: What's the minimum distance each robot will attempt to
                     keep from any other
             cohere, separate, match: factors for the relative importance of
                     the three drives."""
-        self.population = population
         self.vision = vision
-        self.speed = speed
         self.separation = separation
         self.schedule = RandomActivation(self)
-        self.space = ContinuousSpace(width, height, False) # not toroidal
+        self.space = ContinuousSpace(16.46, 8.23, False) # 16x8 meters, not toroidal
         self.factors = dict(cohere=cohere, separate=separate, match=match)
         self.make_agents()
         self.running = True
 
     def make_agents(self):
-        """
-        Create self.population agents, with random positions and starting headings.
-        """
-        print(self.space.x_max)
-        print(self.space.y_max)
-        for i in range(self.population):
+        for i in range(0, 3):
             x = self.random.random() * self.space.x_max
             y = self.random.random() * self.space.y_max
             pos = np.array((x, y))
-            # TODO make this intrinsic
-            velocity = np.random.random(2) * 2 - 1
             robot = Robot(
                 i,
                 self,
                 pos,
-                self.speed,
-                velocity,
+                Alliance.RED,
                 self.vision,
                 self.separation,
                 **self.factors
             )
             self.space.place_agent(robot, pos)
             self.schedule.add(robot)
-        for i in range(100,122):
+
+
+        for i in range(10, 13):
             x = self.random.random() * self.space.x_max
             y = self.random.random() * self.space.y_max
             pos = np.array((x, y))
-            cargo = Cargo(i, self, pos)
+            robot = Robot(
+                i,
+                self,
+                pos,
+                Alliance.BLUE,
+                self.vision,
+                self.separation,
+                **self.factors
+            )
+            self.space.place_agent(robot, pos)
+            self.schedule.add(robot)
+
+        for i in range(100,111):
+            x = self.random.random() * self.space.x_max
+            y = self.random.random() * self.space.y_max
+            pos = np.array((x, y))
+            cargo = Cargo(i, self, pos, Alliance.RED)
             self.space.place_agent(cargo, pos)
             self.schedule.add(cargo)
 
+        for i in range(200,211):
+            x = self.random.random() * self.space.x_max
+            y = self.random.random() * self.space.y_max
+            pos = np.array((x, y))
+            cargo = Cargo(i, self, pos, Alliance.BLUE)
+            self.space.place_agent(cargo, pos)
+            self.schedule.add(cargo)
 
     def step(self):
         self.schedule.step()

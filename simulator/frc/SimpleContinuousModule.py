@@ -1,24 +1,15 @@
-"""
-The Python side of a custom visualization module for drawing agents with continuous positions.
-
-"""
-
+from mesa import Agent
 from mesa.visualization.ModularVisualization import VisualizationElement
-
+from typing import Callable
 
 class SimpleCanvas(VisualizationElement):
     local_includes = ["frc/simple_continuous_canvas.js"]
-    portrayal_method = None
-# these are overridden
-    canvas_height = 823 # in cm this time
-    canvas_width = 1646
 
-# these are overridden
-    def __init__(self, portrayal_method, canvas_height=823, canvas_width=1646):
-        """
-        Instantiate a new SimpleCanvas
-        """
-        self.portrayal_method = portrayal_method
+    def __init__(self,
+                 portrayal_method: Callable[[Agent], dict],
+                 canvas_height: int,
+                 canvas_width: int):
+        self._portrayal_method = portrayal_method
         self.canvas_height = canvas_height
         self.canvas_width = canvas_width
         new_element = "new Simple_Continuous_Module({}, {})".format(
@@ -29,7 +20,7 @@ class SimpleCanvas(VisualizationElement):
     def render(self, model):
         space_state = []
         for obj in model.schedule.agents:
-            portrayal = self.portrayal_method(obj)
+            portrayal = self._portrayal_method(obj)
             x, y = obj.pos
             x = (x - model.space.x_min) / (model.space.x_max - model.space.x_min)
             y = (y - model.space.y_min) / (model.space.y_max - model.space.y_min)
