@@ -16,6 +16,14 @@ class Cargo(Agent):
         self._velocity = np.random.random(2) * 2 - 1
 
     def step(self):
+        # 
+        neighbors = self.model.space.get_neighbors(self.pos, 2, False) # 2m
+        for neighbor in neighbors:
+            if (self.model.space.get_distance(self.pos, neighbor.pos)
+                < self.radius_m + neighbor.radius_m):
+                # collision!
+                print("collision")
+            
         new_pos = self.pos + self._velocity * self._speed
         x, y = new_pos
         if x < 0 or x >= self.model.space.width:
@@ -24,6 +32,9 @@ class Cargo(Agent):
             self._velocity *= [1,-1]
         new_pos = self.pos + self._velocity * self._speed
         self.model.space.move_agent(self, new_pos)
+
+    def advance(self):
+        pass
 
 class Robot(Agent):
     def __init__(self, unique_id: int, model: 'Model',
@@ -90,3 +101,6 @@ class Robot(Agent):
             self._velocity *= [1,-1]
         new_pos = self.pos + self._velocity * self._speed
         self.model.space.move_agent(self, new_pos)
+
+    def advance(self):
+        pass

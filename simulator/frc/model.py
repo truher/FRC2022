@@ -1,24 +1,12 @@
-"""
-The model instantiates the environment.
-
-Uses numpy arrays to represent vectors.
-"""
-
 import numpy as np
-
 from mesa import Model
 from mesa.space import ContinuousSpace
-from mesa.time import RandomActivation
-
+from mesa.time import SimultaneousActivation
 from .agents import Cargo, Robot
 from .alliance import Alliance
 
 
 class RobotFlockers(Model):
-    """
-    Flocker model class. Handles agent creation, placement and scheduling.
-    """
-
     def __init__(
         self,
         vision=20,
@@ -38,7 +26,7 @@ class RobotFlockers(Model):
                     the three drives."""
         self.vision = vision
         self.separation = separation
-        self.schedule = RandomActivation(self)
+        self.schedule = SimultaneousActivation(self)
         self.space = ContinuousSpace(16.46, 8.23, False) # 16x8 meters, not toroidal
         self.factors = dict(cohere=cohere, separate=separate, match=match)
         self.make_agents()
