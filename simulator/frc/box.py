@@ -6,12 +6,11 @@ import matplotlib.animation as animation
 from random import random, uniform, choice
 
 mpl.use('TkAgg')
-BASE_SPEED = 10
 
 class Box:
-    def __init__(self, x, y):
-        self.size_factor = min(x, y) / 1000
-        self.size_x, self.size_y = x, y
+    def __init__(self):
+        self.size_x = 800
+        self.size_y = 800
         self.balls = []
         self.fig, self.ax = plt.subplots()
         dpi = 100
@@ -22,17 +21,18 @@ class Box:
         self.artist_to_ball = {}
         plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
 
-    def add_random_balls(self, num, random_sizes=True, random_colours=True, speed_factor=1.0, e=1.0):
+    def add_random_balls(self, num, e=1.0):
         i, j = 0, 0
         while i < num:
             if j > num * 5:
                 break
-            size = choice([25, 30, 35]) if random_sizes else 20
-            size = size * self.size_factor
-            color = [random() for _ in range(3)] if random_colours else 'b'
-            speed = BASE_SPEED * speed_factor * self.size_factor
+            size = choice([10, 30, 50])
+            size = size
+            color = [random() for _ in range(3)]
+            speed = 10
             ball = Ball(
-                x := uniform(size, self.size_x-size), y := uniform(size, self.size_y-size),
+                x := uniform(size, self.size_x-size),
+                y := uniform(size, self.size_y-size),
                 size, uniform(-speed, speed), uniform(-speed, speed), e
             )
             if not any([ball.is_colliding(existing_ball) for existing_ball in self.balls]):
