@@ -11,14 +11,16 @@ class Thing(Agent):
         pos
     ) -> None:
         super().__init__(unique_id, model)
-        self.pos = np.array(pos)
+        self.pos = np.array(pos) # TODO: remove this, place_agent does it.
         self.nextpos = self.pos
         self.in_collision = [] # avoid duplication in pairs
 
     def advance(self):
+        # actually does the moving
         self.model.space.move_agent(self, self.nextpos)
 
-    def time_step(self):
+    def update_nextpos_for_velocity(self):
+        # based on velocity
         self.nextpos = self.pos + self._velocity * STEP_SIZE_S
 
     def is_colliding(self, other):
@@ -52,6 +54,21 @@ class Thing(Agent):
             self.in_collision.remove(other)
             other.in_collision.remove(self)
 
+class Obstacle(Thing):
+    """ has infinite mass """
+    def __init__(self, unique_id: int, model: 'Model', pos) -> None:
+        super().__init__(unique_id, model, pos)
+        self.pos = np.array(pos)
+        self.nextpos = self.pos
+        self.in_collision = [] # avoid duplication in pairs
+        self.radius_m = 0.045 # terminal posts are  ~4.5cm wide
+        self.mass_kg = np.inf
+        self._velocity = np.zeros(2)
+
+    def step(self): # override: never moves, so just check collisions
+        for neighbor in self.model.space.get_neighbors(self.pos, 2, False): # 2m neighborhood
+            self.check_ball_collision(neighbor)
+
 class Cargo(Thing):
     def __init__(self, unique_id: int, model: 'Model',
         pos,
@@ -61,14 +78,14 @@ class Cargo(Thing):
         self.alliance: Alliance = alliance
         self.radius_m = 0.12
         self.mass_kg = 0.27
+# TODO: make velocity also use step/advance
         self._velocity = np.random.random(2) * 0.02 - 0.01
 
     def step(self):
-        self.time_step()
+        self.update_nextpos_for_velocity()
         self.check_wall_collision(self.model.space.width, self.model.space.height)
 
-        neighbors = self.model.space.get_neighbors(self.pos, 2, False) # 2m neighborhood
-        for neighbor in neighbors:
+        for neighbor in self.model.space.get_neighbors(self.pos, 2, False): # 2m neighborhood
             self.check_ball_collision(neighbor)
 
 class Robot(Thing):
@@ -85,9 +102,8 @@ class Robot(Thing):
     def step(self):
         # wiggle
         self._velocity += np.random.normal(loc=0.00, scale=0.05, size=2)
-        self.time_step()
+        self.update_nextpos_for_velocity()
         self.check_wall_collision(self.model.space.width, self.model.space.height)
 
-        neighbors = self.model.space.get_neighbors(self.pos, 2, False) # 2m neighborhood
-        for neighbor in neighbors:
+        for neighbor in self.model.space.get_neighbors(self.pos, 2, False): # 2m neighborhood
             self.check_ball_collision(neighbor)

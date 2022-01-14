@@ -25,11 +25,21 @@ def collide(p1: ArrayLike, v1: ArrayLike, m1: float, e1: float,
     normal_scalar_before_2: float = np.dot(v2, unit_normal_vector)
     tangent_scalar_2: float = np.dot(v2, unit_tangent_vector)
 
-    normal_scalar_after_1: float = ( (normal_scalar_before_1 * (m1 - e * m2))
-        + ((e + 1) * m2 * normal_scalar_before_2)) / (m1 + m2)
-
-    normal_scalar_after_2: float = ( (normal_scalar_before_2 * (m2 - e * m1))
-        + ((e + 1) * m1 * normal_scalar_before_1)) / (m1 + m2)
+    normal_scalar_after_1: float
+    normal_scalar_after_2: float
+    if np.isinf(m1):
+        normal_scalar_after_1 = normal_scalar_before_1
+        normal_scalar_after_2 = (- normal_scalar_before_2 * e
+            + (e + 1) * normal_scalar_before_1)
+    elif np.isinf(m2):
+        normal_scalar_after_1 = (- normal_scalar_before_1 * e
+            + (e + 1) * normal_scalar_before_2)
+        normal_scalar_after_2 = normal_scalar_before_2
+    else:
+        normal_scalar_after_1 = ( (normal_scalar_before_1 * (m1 - e * m2))
+            + ((e + 1) * m2 * normal_scalar_before_2)) / (m1 + m2)
+        normal_scalar_after_2 = ( (normal_scalar_before_2 * (m2 - e * m1))
+            + ((e + 1) * m1 * normal_scalar_before_1)) / (m1 + m2)
 
     normal_vector_after_1: ArrayLike = np.multiply(normal_scalar_after_1, unit_normal_vector)
     tangent_vector_after_1: ArrayLike = np.multiply(tangent_scalar_1, unit_tangent_vector)
