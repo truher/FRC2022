@@ -17,7 +17,7 @@ class Cargo(Agent):
 
     def step(self):
         # 
-        neighbors = self.model.space.get_neighbors(self.pos, 2, False) # 2m
+        neighbors = self.model.space.get_neighbors(self.pos, 2, False) # 2m neighborhood
         for neighbor in neighbors:
             if (self.model.space.get_distance(self.pos, neighbor.pos)
                 < self.radius_m + neighbor.radius_m):

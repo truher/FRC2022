@@ -1,8 +1,9 @@
 import math
 import numpy as np
+from .collision import collide, overlap
 
 class Ball:
-    def __init__(self, x, y, r, vx, vy, e):
+    def __init__(self, x, y, r, vx, vy, e: float) -> None:
         self.position = np.array((x,y))
         self.__radius = r
         self.__velocity = np.array((vx, vy))
@@ -32,41 +33,14 @@ class Ball:
             self.__velocity[1] = -self.__velocity[1]
 
     def is_colliding(self, other):
-        return np.linalg.norm(other.position - self.position) <= self.__radius + other.__radius
+        return overlap(other.position, self.position, other.__radius, self.__radius)
 
     def check_ball_collision(self, other):
         if self.is_colliding(other):
             if other not in self.__in_collision:
-                e = min(self.__elasticity, other.__elasticity)
-                d = other.position - self.position
-
-                unit_normal_vector = d / np.linalg.norm(d)
-                unit_tangent_vector = np.array((-unit_normal_vector[1], unit_normal_vector[0]))
-
-                self_normal_scalar_before = np.dot(self.__velocity, unit_normal_vector)
-                self_tangent_scalar = np.dot(self.__velocity, unit_tangent_vector)
-
-                other_normal_scalar_before = np.dot(other.__velocity, unit_normal_vector)
-                other_tangent_scalar = np.dot(other.__velocity, unit_tangent_vector)
-
-                self_normal_scalar_after = (
-                    (self_normal_scalar_before * (self.mass - e * other.mass))
-                    + ((e + 1) * other.mass * other_normal_scalar_before)
-                ) / (self.mass + other.mass)
-
-                other_normal_scalar_after = (
-                    (other_normal_scalar_before * (other.mass - e * self.mass))
-                    + ((e + 1) * self.mass * self_normal_scalar_before)
-                ) / (self.mass + other.mass)
-
-                self_normal_vector_after = self_normal_scalar_after * unit_normal_vector
-                self_tangent_vector_after = self_tangent_scalar * unit_tangent_vector
-
-                other_normal_vector_after = other_normal_scalar_after * unit_normal_vector
-                other_tangent_vector_after = other_tangent_scalar * unit_tangent_vector
-
-                self.__velocity = self_normal_vector_after + self_tangent_vector_after
-                other.__velocity = other_normal_vector_after + other_tangent_vector_after
+                self.__velocity, other.__velocity = collide(
+                    self.position, self.__velocity, self.mass, self.__elasticity,
+                    other.position, other.__velocity, other.mass, other.__elasticity)
 
                 self.__in_collision.append(other)
                 other.__in_collision.append(self)

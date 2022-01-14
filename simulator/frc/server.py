@@ -13,7 +13,6 @@ def robot_draw(agent: Agent) -> dict:
         "Color": agent.alliance.color
     }
 
-
 robot_canvas = SimpleCanvas(robot_draw, 823, 1646)
 model_params = {
     "vision": 20,
