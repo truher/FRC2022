@@ -19,61 +19,66 @@ class RobotFlockers(Model):
     def is_overlapping(self, pos, r) -> bool:
         for a in self.space._agent_to_index.keys():
             if overlap(pos, a.pos, r, a.radius_m):
-                #print(f"overlap {pos} {a.pos}")
                 return True
         return False
 
-    def make_agents(self):
-        # a center obstacle
-        ctr = np.array((X_MAX_M/2, Y_MAX_M/2))
-        obstacle = Obstacle(300, self, ctr)
-        obstacle.radius_m = 1.72
-        #obstacle.mass_kg = np.inf # ???
-        #obstacle._velocity = np.zeros(2)
-        # the normal calcs don't work with infinite mass.
-        self.space.place_agent(obstacle, ctr)
+    def place_obstacle(self, i, pos, radius_m):
+        obstacle = Obstacle(i, self, pos)
+        obstacle.radius_m = radius_m
+        self.space.place_agent(obstacle, pos)
         self.schedule.add(obstacle)
 
-        counter = 1000
-        for xx in np.arange(0+0.01, X_MAX_M-0.01, 0.5):
-            for yy in [0.01, Y_MAX_M-0.01]:
-                counter += 1
-                pos = np.array((xx, yy))
-                #print(f"counter {counter} pos {pos}")
-                obstacle = Obstacle(counter, self, pos)
-                obstacle.radius_m = 0.01
-                self.space.place_agent(obstacle, pos)
-                self.schedule.add(obstacle)
+    def place_robot(self, i, pos, alliance):
+        robot = Robot(i, self, pos, alliance)
+        robot._velocity = np.random.normal(loc=0.00, scale=0.5, size=2)
+        self.space.place_agent(robot, pos)
+        self.schedule.add(robot)
+
+    def place_cargo(self, i, pos, alliance):
+        cargo = Cargo(i, self, pos, alliance)
+        self.space.place_agent(cargo, pos)
+        self.schedule.add(cargo)
+
+    def make_agents(self):
+        # the hub
+        ctr = np.array((X_MAX_M/2, Y_MAX_M/2))
+        self.place_obstacle(300, ctr, 1.72)
+
+        # blue hangar upper left
+        H_R = 0.2 # post radius 20cm
+        H_X = 3.07 # x dimension 3.07m
+        H_Y = 2.75 # y dimension 2.75m
+        self.place_obstacle(2000, (H_R, H_R), H_R)
+        self.place_obstacle(2001, (H_X - H_R, H_R), H_R)
+        self.place_obstacle(2002, (H_X - H_R, H_Y - H_R), H_R)
+        self.place_obstacle(2003, (H_R, H_Y - H_R), H_R)
+
+        # red hangar lower right
+        self.place_obstacle(2004, (X_MAX_M - H_R, Y_MAX_M - H_R), H_R)
+        self.place_obstacle(2005, (X_MAX_M - H_X + H_R, Y_MAX_M - H_R), H_R)
+        self.place_obstacle(2006, (X_MAX_M - H_X + H_R, Y_MAX_M - H_Y + H_R), H_R)
+        self.place_obstacle(2007, (X_MAX_M - H_R, Y_MAX_M - H_Y + H_R), H_R)
+
+        T_R = 0.0225 # post diameter m
+        T_D = 1.75 # X and Y extent m
+        i = 3000
+        for p in np.linspace(T_R, T_D-T_R, 6):
+            # blue terminal lower left
+            self.place_obstacle(i, (p, Y_MAX_M - T_D + p), T_R)
+            i += 1
+            # red terminal upper right
+            self.place_obstacle(i, (X_MAX_M -T_D + p, p), T_R)
+            i += 1
  
-        for xx in [0.01, X_MAX_M-0.01]:
-            for yy in np.arange(0+0.01, Y_MAX_M-0.01, 0.5):
-                counter += 1
-                pos = np.array((xx, yy))
-                #print(f"counter {counter} pos {pos}")
-                obstacle = Obstacle(counter, self, pos)
-                obstacle.radius_m = 0.01
-                self.space.place_agent(obstacle, pos)
-                self.schedule.add(obstacle)
- 
-
-
-
-
-
-
         # red robots
         for i in range(0, 3):
             while True: # avoid overlap
                 x = self.space.x_max / 2 + 2 + self.random.random() * (self.space.x_max/2 - 3)
                 y = 1 + self.random.random() * (self.space.y_max - 2)
                 pos = np.array((x, y))
-                #print(f"i {i} pos {pos}")
                 if not self.is_overlapping(pos, 0.5):
                     break
-            robot = Robot( i, self, pos, Alliance.RED)
-            robot._velocity = np.random.normal(loc=0.00, scale=0.5, size=2)
-            self.space.place_agent(robot, pos)
-            self.schedule.add(robot)
+            self.place_robot(i, pos, Alliance.RED)
 
         # blue robots
         for i in range(10, 13):
@@ -83,11 +88,7 @@ class RobotFlockers(Model):
                 pos = np.array((x, y))
                 if not self.is_overlapping(pos, 0.5):
                     break
-            #print(f"i {i} pos {pos}")
-            robot = Robot( i, self, pos, Alliance.BLUE)
-            robot._velocity = np.random.normal(loc=0.00, scale=0.5, size=2)
-            self.space.place_agent(robot, pos)
-            self.schedule.add(robot)
+            self.place_robot(i, pos, Alliance.BLUE)
 
         # red cargo
         for i in range(100,111):
@@ -97,10 +98,7 @@ class RobotFlockers(Model):
                 pos = np.array((x, y))
                 if not self.is_overlapping(pos, 0.12):
                     break
-            #print(f"i {i} pos {pos}")
-            cargo = Cargo(i, self, pos, Alliance.RED)
-            self.space.place_agent(cargo, pos)
-            self.schedule.add(cargo)
+            self.place_cargo(i, pos, Alliance.RED)
 
         # blue cargo
         for i in range(200,211):
@@ -110,10 +108,7 @@ class RobotFlockers(Model):
                 pos = np.array((x, y))
                 if not self.is_overlapping(pos, 0.12):
                     break
-            #print(f"i {i} pos {pos}")
-            cargo = Cargo(i, self, pos, Alliance.BLUE)
-            self.space.place_agent(cargo, pos)
-            self.schedule.add(cargo)
+            self.place_cargo(i, pos, Alliance.BLUE)
 
     def step(self):
         self.schedule.step()

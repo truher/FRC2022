@@ -30,16 +30,16 @@ class Thing(Agent):
     def check_wall_collision(self, size_x, size_y):
         if self.nextpos[0] <= self.radius_m:
             self.nextpos[0] = self.radius_m
-            self._velocity[0] = -self._velocity[0]
+            self._velocity[0] = -self._velocity[0] * 0.25 # FIXME
         elif self.nextpos[0] >= (x2_bound := (size_x - self.radius_m)):
             self.nextpos[0] = x2_bound
-            self._velocity[0] = -self._velocity[0]
+            self._velocity[0] = -self._velocity[0] * 0.25 # FIXME
         if self.nextpos[1] <= self.radius_m:
             self.nextpos[1] = self.radius_m
-            self._velocity[1] = -self._velocity[1]
+            self._velocity[1] = -self._velocity[1] * 0.25 # FIXME
         elif self.nextpos[1] >= (y2_bound := (size_y - self.radius_m)):
             self.nextpos[1] = y2_bound
-            self._velocity[1] = -self._velocity[1]
+            self._velocity[1] = -self._velocity[1] * 0.25 # FIXME
             #print(f"wall {self.nextpos[1]}")
 
     def check_ball_collision(self, other):
@@ -51,8 +51,8 @@ class Thing(Agent):
             #    print(f"other inf mass colliding {distance_scalar}")
             if other not in self.in_collision:
                 self._velocity, other._velocity = collide(
-                    self.pos, self._velocity, self.mass_kg, 0.25,
-                    other.pos, other._velocity, other.mass_kg, 0.25)
+                    self.pos, self._velocity, self.mass_kg, 0.25, # FIXME
+                    other.pos, other._velocity, other.mass_kg, 0.25) # FIXME
                 self.in_collision.append(other)
                 other.in_collision.append(self)
         elif other in self.in_collision:
@@ -106,7 +106,7 @@ class Robot(Thing):
 
     def step(self):
         # wiggle
-        #self._velocity += np.random.normal(loc=0.00, scale=0.05, size=2)
+        self._velocity += np.random.normal(loc=0.00, scale=0.05, size=2)
         self.update_nextpos_for_velocity()
         self.check_wall_collision(self.model.space.width, self.model.space.height)
 
