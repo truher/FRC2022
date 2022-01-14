@@ -1,106 +1,92 @@
 import numpy as np
 from mesa import Agent
 from .alliance import Alliance
+from .collision import collide, overlap
 
-class Cargo(Agent):
+STEP_SIZE_S = 0.1 # TOOD fix this
+
+class Thing(Agent):
+    def __init__(self, unique_id: int, model: 'Model',
+        pos
+    ) -> None:
+        super().__init__(unique_id, model)
+        self.pos = np.array(pos)
+        self.nextpos = self.pos
+        self.in_collision = [] # avoid duplication in pairs
+
+    def advance(self):
+        self.model.space.move_agent(self, self.nextpos)
+
+    def time_step(self):
+        self.nextpos = self.pos + self._velocity * STEP_SIZE_S
+
+    def is_colliding(self, other):
+        return overlap(other.pos, self.pos, other.radius_m, self.radius_m)
+
+    # TODO: the wall is not a rectangle so this will have to change somehow
+    def check_wall_collision(self, size_x, size_y):
+        if self.nextpos[0] <= self.radius_m:
+            self.nextpos[0] = self.radius_m
+            self._velocity[0] = -self._velocity[0]
+        elif self.nextpos[0] >= (x2_bound := (size_x - self.radius_m)):
+            self.nextpos[0] = x2_bound
+            self._velocity[0] = -self._velocity[0]
+        if self.nextpos[1] <= self.radius_m:
+            self.nextpos[1] = self.radius_m
+            self._velocity[1] = -self._velocity[1]
+        elif self.nextpos[1] >= (y2_bound := (size_y - self.radius_m)):
+            self.nextpos[1] = y2_bound
+            self._velocity[1] = -self._velocity[1]
+            #print(f"wall {self.nextpos[1]}")
+
+    def check_ball_collision(self, other):
+        if self.is_colliding(other):
+            if other not in self.in_collision:
+                self._velocity, other._velocity = collide(
+                    self.pos, self._velocity, self.mass_kg, 0.75,
+                    other.pos, other._velocity, other.mass_kg, 0.75)
+                self.in_collision.append(other)
+                other.in_collision.append(self)
+        elif other in self.in_collision:
+            self.in_collision.remove(other)
+            other.in_collision.remove(self)
+
+class Cargo(Thing):
     def __init__(self, unique_id: int, model: 'Model',
         pos,
         alliance: Alliance,
     ) -> None:
-        super().__init__(unique_id, model)
-        self.pos = np.array(pos)
+        super().__init__(unique_id, model, pos)
         self.alliance: Alliance = alliance
         self.radius_m = 0.12
         self.mass_kg = 0.27
-        self._speed = 0.1
-        self._velocity = np.random.random(2) * 2 - 1
+        self._velocity = np.random.random(2) * 0.02 - 0.01
 
     def step(self):
-        # 
+        self.time_step()
+        self.check_wall_collision(self.model.space.width, self.model.space.height)
+
         neighbors = self.model.space.get_neighbors(self.pos, 2, False) # 2m neighborhood
         for neighbor in neighbors:
-            if (self.model.space.get_distance(self.pos, neighbor.pos)
-                < self.radius_m + neighbor.radius_m):
-                # collision!
-                print("collision")
-            
-        new_pos = self.pos + self._velocity * self._speed
-        x, y = new_pos
-        if x < 0 or x >= self.model.space.width:
-            self._velocity *= [-1,1]
-        if y < 0 or y >= self.model.space.height:
-            self._velocity *= [1,-1]
-        new_pos = self.pos + self._velocity * self._speed
-        self.model.space.move_agent(self, new_pos)
+            self.check_ball_collision(neighbor)
 
-    def advance(self):
-        pass
-
-class Robot(Agent):
+class Robot(Thing):
     def __init__(self, unique_id: int, model: 'Model',
         pos,
         alliance: Alliance,
-        vision,
-        separation,
-        cohere=0.025,
-        separate=0.25,
-        match=0.04,
     ):
-        super().__init__(unique_id, model)
-        self.pos = np.array(pos)
+        super().__init__(unique_id, model, pos)
         self.radius_m = 0.50
         self.mass_kg = 56 # max allowed
         self.alliance: Alliance = alliance
-        self._speed = 0.1
-        self._velocity = np.random.random(2) * 2 - 1
-        self.vision = vision
-        self.separation = separation
-        self.cohere_factor = cohere
-        self.separate_factor = separate
-        self.match_factor = match
-
-    def cohere(self, neighbors):
-        cohere = np.zeros(2)
-        if neighbors:
-            for neighbor in neighbors:
-                cohere += self.model.space.get_heading(self.pos, neighbor.pos)
-            cohere /= len(neighbors)
-        return cohere
-
-    def separate(self, neighbors):
-        me = self.pos
-        them = (n.pos for n in neighbors)
-        separation_vector = np.zeros(2)
-        for other in them:
-            if self.model.space.get_distance(me, other) < self.separation:
-                separation_vector -= self.model.space.get_heading(me, other)
-        return separation_vector
-
-    def match_heading(self, neighbors):
-        match_vector = np.zeros(2)
-        if neighbors:
-            for neighbor in neighbors:
-                match_vector += neighbor._velocity
-            match_vector /= len(neighbors)
-        return match_vector
+        self._velocity = np.random.random(2) * 0.02 - 0.01
 
     def step(self):
-        neighbors = self.model.space.get_neighbors(self.pos, self.vision, False)
+        # wiggle
         self._velocity += np.random.normal(loc=0.00, scale=0.05, size=2)
-        #self._velocity += (
-        #    self.cohere(neighbors) * self.cohere_factor
-        #    + self.separate(neighbors) * self.separate_factor
-        #    + self.match_heading(neighbors) * self.match_factor
-        #) / 2
-        self._velocity /= np.linalg.norm(self._velocity)
-        new_pos = self.pos + self._velocity * self._speed
-        x, y = new_pos
-        if x < 0 or x >= self.model.space.width:
-            self._velocity *= [-1,1]
-        if y < 0 or y >= self.model.space.height:
-            self._velocity *= [1,-1]
-        new_pos = self.pos + self._velocity * self._speed
-        self.model.space.move_agent(self, new_pos)
+        self.time_step()
+        self.check_wall_collision(self.model.space.width, self.model.space.height)
 
-    def advance(self):
-        pass
+        neighbors = self.model.space.get_neighbors(self.pos, 2, False) # 2m neighborhood
+        for neighbor in neighbors:
+            self.check_ball_collision(neighbor)

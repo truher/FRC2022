@@ -14,9 +14,6 @@ def robot_draw(agent: Agent) -> dict:
     }
 
 robot_canvas = SimpleCanvas(robot_draw, 823, 1646)
-model_params = {
-    "vision": 20,
-    "separation": 2,
-}
+model_params = { }
 
 server = ModularServer(RobotFlockers, [robot_canvas], "Robots", model_params)
