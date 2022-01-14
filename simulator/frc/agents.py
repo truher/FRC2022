@@ -4,6 +4,7 @@ from .alliance import Alliance
 from .collision import collide, overlap
 
 STEP_SIZE_S = 0.1 # TOOD fix this
+ELASTICITY = 0.25 # ???
 
 class Thing(Agent):
     def __init__(self, unique_id: int, model: 'Model',
@@ -43,8 +44,8 @@ class Thing(Agent):
         if self.is_colliding(other):
             if other not in self.in_collision:
                 self._velocity, other._velocity = collide(
-                    self.pos, self._velocity, self.mass_kg, 0.75,
-                    other.pos, other._velocity, other.mass_kg, 0.75)
+                    self.pos, self._velocity, self.mass_kg, 0.25,
+                    other.pos, other._velocity, other.mass_kg, 0.25)
                 self.in_collision.append(other)
                 other.in_collision.append(self)
         elif other in self.in_collision:
