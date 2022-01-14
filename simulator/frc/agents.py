@@ -44,6 +44,11 @@ class Thing(Agent):
 
     def check_ball_collision(self, other):
         if self.is_colliding(other):
+            #distance_scalar = np.linalg.norm(np.subtract(self.pos, other.pos))
+            #if np.isinf(self.mass_kg):
+            #    print(f"self inf mass colliding {distance_scalar}")
+            #if np.isinf(other.mass_kg):
+            #    print(f"other inf mass colliding {distance_scalar}")
             if other not in self.in_collision:
                 self._velocity, other._velocity = collide(
                     self.pos, self._velocity, self.mass_kg, 0.25,
@@ -66,7 +71,7 @@ class Obstacle(Thing):
         self._velocity = np.zeros(2)
 
     def step(self): # override: never moves, so just check collisions
-        for neighbor in self.model.space.get_neighbors(self.pos, 2, False): # 2m neighborhood
+        for neighbor in self.model.space.get_neighbors(self.pos, 4, False): # 2m neighborhood
             self.check_ball_collision(neighbor)
 
 class Cargo(Thing):
@@ -101,9 +106,9 @@ class Robot(Thing):
 
     def step(self):
         # wiggle
-        self._velocity += np.random.normal(loc=0.00, scale=0.05, size=2)
+        #self._velocity += np.random.normal(loc=0.00, scale=0.05, size=2)
         self.update_nextpos_for_velocity()
         self.check_wall_collision(self.model.space.width, self.model.space.height)
 
-        for neighbor in self.model.space.get_neighbors(self.pos, 2, False): # 2m neighborhood
+        for neighbor in self.model.space.get_neighbors(self.pos, 4, False): # 4m neighborhood
             self.check_ball_collision(neighbor)
