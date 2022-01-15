@@ -14,7 +14,7 @@ var ContinuousVisualization = function(width, height, context) {
 		for (var i in objects) {
 			var p = objects[i];
 			if (p.Shape == "rect")
-				this.drawRectange(p.x, p.y, p.w, p.h, p.Color, p.Filled);
+				this.drawRectangle(p.x, p.y, p.w, p.h, p.Color, p.Filled);
 			if (p.Shape == "circle")
 				this.drawCircle(p.x, p.y, p.r, p.Color, p.Filled);
 		};
@@ -40,7 +40,7 @@ var ContinuousVisualization = function(width, height, context) {
 
 	};
 
-	this.drawRectange = function(x, y, w, h, color, fill) {
+	this.drawRectangle = function(x, y, w, h, color, fill) {
 		context.beginPath();
 		var dx = w * width;
 		var dy = h * height;
