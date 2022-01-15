@@ -1,7 +1,7 @@
 import numpy as np
 from mesa import Model
 from mesa.space import ContinuousSpace
-from mesa.time import SimultaneousActivation
+from mesa.time import RandomActivation
 from .agents import Cargo, Obstacle, Robot
 from .alliance import Alliance
 from .collision import overlap
@@ -11,7 +11,7 @@ Y_MAX_M = 8.23
 
 class RobotFlockers(Model):
     def __init__(self):
-        self.schedule = SimultaneousActivation(self)
+        self.schedule = RandomActivation(self)
         self.space = ContinuousSpace(X_MAX_M, Y_MAX_M, False) # 16x8 meters, not toroidal
         self.make_agents()
         self.running = True
@@ -36,6 +36,7 @@ class RobotFlockers(Model):
 
     def place_cargo(self, i, pos, alliance):
         cargo = Cargo(i, self, pos, alliance)
+        cargo._velocity = np.random.normal(loc=0.00, scale=0.5, size=2)
         self.space.place_agent(cargo, pos)
         self.schedule.add(cargo)
 
