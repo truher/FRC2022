@@ -8,10 +8,11 @@ ELASTICITY = 0.25 # ???
 
 class Thing(Agent):
     def __init__(self, unique_id: int, model: 'Model',
-        pos
+        pos, elasticity
     ) -> None:
         super().__init__(unique_id, model)
         self.pos = np.array(pos) # TODO: remove this, place_agent does it.
+        self.elasticity = elasticity
         self._velocity = np.zeros(2)
 
     def update_pos_for_velocity(self, size_x, size_y):
@@ -32,24 +33,24 @@ class Thing(Agent):
     def check_wall_collision(self, size_x, size_y):
         if self.pos[0] <= self.radius_m:
             self.pos[0] = self.radius_m
-            self._velocity[0] = -self._velocity[0] * 0.25 # FIXME
+            self._velocity[0] = -self._velocity[0] * self.elasticity
         elif self.pos[0] >= (x2_bound := (size_x - self.radius_m)):
             self.pos[0] = x2_bound
-            self._velocity[0] = -self._velocity[0] * 0.25 # FIXME
+            self._velocity[0] = -self._velocity[0] * self.elasticity
         if self.pos[1] <= self.radius_m:
             self.pos[1] = self.radius_m
-            self._velocity[1] = -self._velocity[1] * 0.25 # FIXME
+            self._velocity[1] = -self._velocity[1] * self.elasticity
         elif self.pos[1] >= (y2_bound := (size_y - self.radius_m)):
             self.pos[1] = y2_bound
-            self._velocity[1] = -self._velocity[1] * 0.25 # FIXME
+            self._velocity[1] = -self._velocity[1] * self.elasticity
 
     def check_ball_collision(self, other) -> bool: # if actually colliding
         if not self.is_colliding(other):
             return False
         d = np.linalg.norm(self.pos-other.pos)
         self._velocity, other._velocity = collide(
-            self.pos, self._velocity, self.mass_kg, 0.25, # FIXME
-            other.pos, other._velocity, other.mass_kg, 0.25) # FIXME
+            self.pos, self._velocity, self.mass_kg, self.elasticity,
+            other.pos, other._velocity, other.mass_kg, other.elasticity)
         self.pos, other.pos = collide_pos(
             self.pos, self.mass_kg, self.radius_m,
             other.pos, other.mass_kg, other.radius_m)
@@ -58,7 +59,7 @@ class Thing(Agent):
 class Obstacle(Thing):
     """ has infinite mass """
     def __init__(self, unique_id: int, model: 'Model', pos) -> None:
-        super().__init__(unique_id, model, pos)
+        super().__init__(unique_id, model, pos, 1.0)
         self.pos = np.array(pos)
         self.radius_m = 0.045 # terminal posts are  ~4.5cm wide
         self.mass_kg = np.inf
@@ -74,7 +75,8 @@ class Cargo(Thing):
         pos,
         alliance: Alliance,
     ) -> None:
-        super().__init__(unique_id, model, pos)
+        super().__init__(unique_id, model, pos, 0.5)
+        # i measured elasticity of 0.5 for rolling collisions, using video
         self.alliance: Alliance = alliance
         self.radius_m = 0.12
         self.mass_kg = 0.27
@@ -93,7 +95,8 @@ class Robot(Thing):
         pos,
         alliance: Alliance,
     ):
-        super().__init__(unique_id, model, pos)
+        super().__init__(unique_id, model, pos, 0.1)
+        # seems like robot collisions are *really* inelastic
         self.radius_m = 0.50
         self.mass_kg = 56 # max allowed
         self.alliance: Alliance = alliance
@@ -103,7 +106,6 @@ class Robot(Thing):
             if self.unique_id >= other.unique_id:
                 continue
             if not self.check_ball_collision(other):
-                pass
                 self._velocity += np.random.normal(loc=0.00, scale=0.05, size=2)
         self.check_wall_collision(self.model.space.width, self.model.space.height)
         self.update_pos_for_velocity(self.model.space.width, self.model.space.height)
