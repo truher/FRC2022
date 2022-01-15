@@ -6,9 +6,10 @@ class SimpleCanvas(VisualizationElement):
     local_includes = ["frc/simple_continuous_canvas.js"]
 
     def __init__(self,
-                 portrayal_method: Callable[[Agent], dict],
-                 canvas_height: int,
-                 canvas_width: int):
+        portrayal_method: Callable[[Agent], dict],
+        canvas_width: int,
+        canvas_height: int
+        ):
         self._portrayal_method = portrayal_method
         self.canvas_height = canvas_height
         self.canvas_width = canvas_width

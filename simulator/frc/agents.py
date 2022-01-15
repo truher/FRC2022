@@ -106,6 +106,7 @@ class Robot(Thing):
             if self.unique_id >= other.unique_id:
                 continue
             if not self.check_ball_collision(other):
-                self._velocity += np.random.normal(loc=0.00, scale=0.05, size=2)
+                pass
+                #self._velocity += np.random.normal(loc=0.00, scale=0.05, size=2)
         self.check_wall_collision(self.model.space.width, self.model.space.height)
         self.update_pos_for_velocity(self.model.space.width, self.model.space.height)

@@ -14,7 +14,7 @@ var ContinuousVisualization = function(width, height, context) {
 		for (var i in objects) {
 			var p = objects[i];
 			if (p.Shape == "rect")
-				this.drawRectangle(p.x, p.y, p.w, p.h, p.Color, p.Filled);
+				this.drawRectangle(p.x, p.y, p.w, p.h, p.angle, p.Color, p.Filled);
 			if (p.Shape == "circle")
 				this.drawCircle(p.x, p.y, p.r, p.Color, p.Filled);
 		};
@@ -40,20 +40,27 @@ var ContinuousVisualization = function(width, height, context) {
 
 	};
 
-	this.drawRectangle = function(x, y, w, h, color, fill) {
+	this.drawRectangle = function(x, y, w, h, angle, color, fill) {
 		context.beginPath();
 		var dx = w * width;
 		var dy = h * height;
 
 		// Keep the drawing centered:
-		var x0 = (x*width) - 0.5*dx;
-		var y0 = (y*height) - 0.5*dy;
+		var x0 = (x*width) + 0.5*dx;
+		var y0 = (y*height) + 0.5*dy;
 
 		context.strokeStyle = color;
 		context.fillStyle = color;
-		if (fill)
+		if (fill) {
+                        context.translate(x0, y0);
+                        context.rotate(angle);
+                        context.translate(-x0, -y0);
 			context.fillRect(x0, y0, dx, dy);
-		else
+                        context.strokeStyle = "black";
+                        context.fillStyle = "black";
+                        context.fillRect(x0, y0, dx/4, dy);
+                        context.setTransform(1, 0, 0, 1, 0, 0);
+		} else
 			context.strokeRect(x0, y0, dx, dy);
 	};
 
