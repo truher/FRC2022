@@ -45,16 +45,21 @@ var ContinuousVisualization = function(width, height, context) {
 		var dx = w * width;
 		var dy = h * height;
 
+                var cx = x * width;
+                var cy = y * height;
+                console.log(cx);
+                console.log(cy);
+
 		// Keep the drawing centered:
-		var x0 = (x*width) + 0.5*dx;
-		var y0 = (y*height) + 0.5*dy;
+		var x0 = cx - 0.5 * dx;
+		var y0 = cy - 0.5 * dy;
 
 		context.strokeStyle = color;
 		context.fillStyle = color;
 		if (fill) {
-                        context.translate(x0, y0);
+                        context.translate(cx, cy);
                         context.rotate(angle);
-                        context.translate(-x0, -y0);
+                        context.translate(-cx, -cy);
 			context.fillRect(x0, y0, dx, dy);
                         context.strokeStyle = "black";
                         context.fillStyle = "black";
