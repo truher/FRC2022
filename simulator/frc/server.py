@@ -38,7 +38,9 @@ def robot_draw(agent: Agent) -> dict:
 class SomeText(TextElement):
     def render(self, model):
         time = model.datacollector.model_vars['time'][-1]
-        return f"model time (s): {time:.2f}"
+        minutes = time // 60
+        seconds = time % 60
+        return f"Model time: {minutes:.0f}:{seconds:05.2f}"
 
 
 robot_canvas = SimpleCanvas(robot_draw, 1646, 823)
