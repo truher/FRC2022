@@ -64,6 +64,6 @@ model_params = {
 }
 
 server = ModularServer(
-    #RobotFlockers, [robot_canvas, text_element, test_chart], "Robots", model_params
-    CalRobotFlockers, [robot_canvas, text_element, speed_chart], "Robots", model_params
+    RobotFlockers, [robot_canvas, text_element], "Robots", model_params
+    #CalRobotFlockers, [robot_canvas, text_element, speed_chart], "Robots", model_params
 )

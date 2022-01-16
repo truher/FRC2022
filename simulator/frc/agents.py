@@ -3,7 +3,6 @@ from mesa import Agent
 from .alliance import Alliance
 from .collision import collide, collide_pos, overlap
 
-STEP_SIZE_S = 0.05 # TOOD fix this
 ELASTICITY = 0.25 # ???
 GRAVITY_M_S_S = 9.8
 # measured with video and a few papers
@@ -26,7 +25,7 @@ class Thing(Agent):
         return np.linalg.norm(self._velocity)
 
     def update_pos_for_velocity(self, size_x, size_y):
-        self.pos += self._velocity * STEP_SIZE_S
+        self.pos += self._velocity * self.model.seconds_per_step
         if self.pos[0] <= self.radius_m:
             self.pos[0] = self.radius_m
         elif self.pos[0] >= (x2_bound := (size_x - self.radius_m)):
@@ -94,7 +93,7 @@ class Cargo(Thing):
 
     def update_velocity_for_rolling_friction(self):
         accel = GRAVITY_M_S_S * ROLLING_FRICTION_COEFFICIENT
-        dv = accel * STEP_SIZE_S # delta v during this step
+        dv = accel * self.model.seconds_per_step # delta v during this step
         v_scalar = np.linalg.norm(self._velocity)
         if dv > v_scalar:
             self._velocity = 0

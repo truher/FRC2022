@@ -10,10 +10,6 @@ from .collision import overlap
 X_MAX_M = 16.46
 Y_MAX_M = 8.23
 
-#def get_step(model):
-#    x = model.model_steps
-#    return x
-
 class RobotFlockers(Model):
     def __init__(self):
         self.schedule = RandomActivation(self)
