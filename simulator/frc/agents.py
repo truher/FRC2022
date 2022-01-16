@@ -124,6 +124,8 @@ class Robot(Thing):
         self.radius_m = 0.50
         self.mass_kg = 56 # max allowed
         self.alliance: Alliance = alliance
+        self.slot1 = None
+        self.slot2 = None
 
     def step(self):
         collided = False # don't try to apply any other forces in collisions

@@ -1,5 +1,6 @@
 from enum import Enum
 class Alliance(Enum):
+    NULL = ("white")
     RED = ("red")
     BLUE = ("blue")
 

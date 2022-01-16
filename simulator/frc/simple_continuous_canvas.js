@@ -13,15 +13,13 @@ var ContinuousVisualization = function(width, height, context) {
 	this.draw = function(objects) {
 		for (var i in objects) {
 			var p = objects[i];
-			if (p.Shape == "rect")
-				this.drawRectangle(p.x, p.y, p.w, p.h, p.angle, p.Color, p.Filled);
-			if (p.Shape == "circle")
-				this.drawCircle(p.x, p.y, p.r, p.Color, p.Filled);
+			if (p.Shape == "robot") this.drawRobot(p);
+			else if (p.Shape == "cargo") this.drawCargo(p);
+			else this.drawCircle(p.x, p.y, p.r, p.color);
 		};
-
 	};
 
-	this.drawCircle = function(x, y, radius, color, fill) {
+	this.drawCircle = function(x, y, radius, color) {
 		var cx = x * width;
 		var cy = y * height;
 		var r = radius;
@@ -29,44 +27,68 @@ var ContinuousVisualization = function(width, height, context) {
 		context.beginPath();
 		context.arc(cx, cy, r, 0, Math.PI * 2, false);
 		context.closePath();
-
-		context.strokeStyle = color;
-		context.stroke();
-
-		if (fill) {
-			context.fillStyle = color;
-			context.fill();
-		}
-
+		context.fillStyle = color;
+		context.fill();
 	};
 
-	this.drawRectangle = function(x, y, w, h, angle, color, fill) {
+	this.drawCargo = function(p) {
+		var cx = p.x * width;
+		var cy = p.y * height;
+                this.drawContents(cx, cy, p.color);
+	};
+
+	this.drawContents = function(cx, cy, color) {
+                var radius = 12;  // 1cm per pixel.  FIXME: assumes width/height
+
 		context.beginPath();
-		var dx = w * width;
-		var dy = h * height;
+		context.arc(cx, cy, radius, 0, Math.PI * 2, false);
+		context.closePath();
+		context.fillStyle = color;
+		context.fill();
+	};
 
-                var cx = x * width;
-                var cy = y * height;
-                console.log(cx);
-                console.log(cy);
+        // cargo hold has two slots; some robots mix them
+	this.drawHold = function(cx, cy) {
+		context.beginPath();
+		context.arc(cx, cy, 14, 0, Math.PI * 2, false);
+		context.closePath();
+                context.lineWidth = 2;
+		context.strokeStyle = "black";
+		context.stroke();
+	};
 
-		// Keep the drawing centered:
+	this.drawBumpers = function(cx, cy, w, h, color) {
+                var bumper_width = 20  // pixels?
+		var dx = w * width - bumper_width;
+		var dy = h * height - bumper_width;
 		var x0 = cx - 0.5 * dx;
 		var y0 = cy - 0.5 * dy;
-
+                context.lineWidth = bumper_width;
+		context.rect(x0, y0, dx, dy);
 		context.strokeStyle = color;
-		context.fillStyle = color;
-		if (fill) {
-                        context.translate(cx, cy);
-                        context.rotate(angle);
-                        context.translate(-cx, -cy);
-			context.fillRect(x0, y0, dx, dy);
-                        context.strokeStyle = "black";
-                        context.fillStyle = "black";
-                        context.fillRect(x0, y0, dx/4, dy);
-                        context.setTransform(1, 0, 0, 1, 0, 0);
-		} else
-			context.strokeRect(x0, y0, dx, dy);
+		context.stroke();
+	};
+
+	this.drawRobot = function(p) {
+                var cx = p.x * width;
+                var cy = p.y * height;
+
+		context.beginPath();
+                context.translate(cx, cy);
+                context.rotate(p.angle);
+                context.translate(-cx, -cy);
+
+                this.drawBumpers(cx, cy, p.w, p.h, p.color);
+
+                // slot 1
+                this.drawHold(cx, cy - 14);
+                this.drawContents(cx, cy - 14, p.slot1);
+
+                // slot 2
+                this.drawHold(cx, cy + 14);
+                this.drawContents(cx, cy + 14, p.slot2);
+
+                context.setTransform(1, 0, 0, 1, 0, 0);
 	};
 
 	this.resetCanvas = function() {

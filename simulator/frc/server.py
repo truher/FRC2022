@@ -4,36 +4,31 @@ from mesa import Agent
 import numpy as np
 
 from .agents import Cargo, Robot
+from .alliance import Alliance
 from .model import CalRobotFlockers, RobotFlockers
 from .SimpleContinuousModule import SimpleCanvas
 
 def robot_draw(agent: Agent) -> dict:
     if isinstance(agent, Cargo):
         return {
-            "Shape": "circle",
-            "r": agent.radius_m * 100,
-            "Filled": "true",
-            "Color": agent.alliance.color
+            "Shape": "cargo",
+            "color": agent.alliance.color
         }
     if isinstance(agent, Robot):
         return {
-            "Shape": "rect",
-            "w": 2*agent.radius_m/16.46,
+            "Shape": "robot",
+            "w": 2*agent.radius_m/16.46, # unit = fraction of the field FIXME
             "h": 2*agent.radius_m/8.23,
             "angle": np.arctan2(agent._velocity[1], agent._velocity[0]),
-            #"r": agent.radius_m * 100,
-            "Filled": "true",
-            "Color": agent.alliance.color
+            "color": agent.alliance.color,
+            "slot1": agent.slot1.alliance.color if agent.slot1 else Alliance.NULL.color,
+            "slot2": agent.slot2.alliance.color if agent.slot1 else Alliance.NULL.color
         }
     return {
         "Shape": "circle",
-        #"w": agent.radius_m/16.46,
-        #"h": agent.radius_m/8.23,
-        "r": agent.radius_m * 100,
-        "Filled": "true",
-        "Color": "gray"
+        "r": agent.radius_m * 100, # FIXME assumes canvas size
+        "color": "gray"
     }
-   
 
 class SomeText(TextElement):
     def render(self, model):
