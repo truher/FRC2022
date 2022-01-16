@@ -96,7 +96,7 @@ class Cargo(Thing):
         dv = accel * self.model.seconds_per_step # delta v during this step
         v_scalar = np.linalg.norm(self._velocity)
         if dv > v_scalar:
-            self._velocity = 0
+            self._velocity = np.zeros(2)
         else:
             v_ratio = dv / v_scalar
             self._velocity = np.multiply(self._velocity, 1-v_ratio)
