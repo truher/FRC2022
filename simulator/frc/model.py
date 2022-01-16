@@ -10,9 +10,9 @@ from .collision import overlap
 X_MAX_M = 16.46
 Y_MAX_M = 8.23
 
-def get_step(model):
-    x = model.schedule.steps
-    return x
+#def get_step(model):
+#    x = model.model_steps
+#    return x
 
 class RobotFlockers(Model):
     def __init__(self):
@@ -21,13 +21,32 @@ class RobotFlockers(Model):
         self.make_agents()
         # datacollector member is needed for charts
         self.datacollector = DataCollector(
-            model_reporters = {
-                "foo": get_step # key is variable name, value is function name
+            model_reporters = { # key: variable name, value: function
+                "time": lambda m: m.model_time,
+                "mean_speed": lambda m: m.mean_speed
             },
-            agent_reporters = {}
+            agent_reporters = {
+                "speed": lambda a: a.speed # time series doesn't work for agent data
+            }
         )
         self.running = True
         self.datacollector.collect(self)
+
+    @property
+    def mean_speed(self):
+        return np.mean(list(a.speed for a in self.schedule.agents))
+
+    @property
+    def model_steps(self):
+        return self.schedule.steps
+
+    @property
+    def seconds_per_step(self):
+        return 0.05
+
+    @property
+    def model_time(self):
+        return self.model_steps * self.seconds_per_step
 
     def is_overlapping(self, pos, r) -> bool:
         for a in self.space._agent_to_index.keys():
@@ -127,3 +146,17 @@ class RobotFlockers(Model):
     def step(self):
         self.schedule.step()
         self.datacollector.collect(self)
+
+
+# to calibrate ball movement
+# spreadsheet simulation says initial 2m/s should stop at about 13m after about 15s.
+# ... and this matches!  yay!
+class CalRobotFlockers(RobotFlockers):
+    # override
+    def make_agents(self):
+        # one ball with initial velocity
+        pos = np.array([1, Y_MAX_M/2])
+        cargo = Cargo(0, self, pos, Alliance.BLUE)
+        cargo._velocity = np.array([2, 0])
+        self.space.place_agent(cargo, pos)
+        self.schedule.add(cargo)

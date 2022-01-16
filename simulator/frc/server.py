@@ -1,10 +1,10 @@
 from mesa.visualization.ModularVisualization import ModularServer
-from mesa.visualization.modules import ChartModule, TextElement
+from mesa.visualization.modules import BarChartModule, ChartModule, TextElement
 from mesa import Agent
 import numpy as np
 
 from .agents import Cargo, Robot
-from .model import RobotFlockers
+from .model import CalRobotFlockers, RobotFlockers
 from .SimpleContinuousModule import SimpleCanvas
 
 def robot_draw(agent: Agent) -> dict:
@@ -36,20 +36,34 @@ def robot_draw(agent: Agent) -> dict:
    
 
 class SomeText(TextElement):
-    #def __init__(self, portrayal_method)
     def render(self, model):
-        return f"steps so far: {model.datacollector.model_vars['foo'][-1]}"
+        time = model.datacollector.model_vars['time'][-1]
+        return f"model time (s): {time:.2f}"
 
 
 robot_canvas = SimpleCanvas(robot_draw, 1646, 823)
-test_chart = ChartModule(
+speed_chart = ChartModule(
     [
-        {"Label": "foo", "Color": "red"}
+        {"Label": "mean_speed", "Color": "red"}
     ]
 )
+#test_chart = ChartModule(
+#    [
+#        {"Label": "time", "Color": "red"}
+#    ]
+#)
+#agent_chart = BarChartModule(
+#    [
+#        {"Label": "speed", "Color": "red"}
+#    ],
+#    scope = "agent"
+#)
 text_element = SomeText()
-model_params = { }
+# ctor variable names
+model_params = {
+}
 
 server = ModularServer(
-    RobotFlockers, [robot_canvas, text_element, test_chart], "Robots", model_params
+    #RobotFlockers, [robot_canvas, text_element, test_chart], "Robots", model_params
+    CalRobotFlockers, [robot_canvas, text_element, speed_chart], "Robots", model_params
 )

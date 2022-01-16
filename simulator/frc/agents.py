@@ -21,6 +21,10 @@ class Thing(Agent):
         self.elasticity = elasticity
         self._velocity = np.zeros(2)
 
+    @property
+    def speed(self):
+        return np.linalg.norm(self._velocity)
+
     def update_pos_for_velocity(self, size_x, size_y):
         self.pos += self._velocity * STEP_SIZE_S
         if self.pos[0] <= self.radius_m:
@@ -99,11 +103,15 @@ class Cargo(Thing):
             self._velocity = np.multiply(self._velocity, 1-v_ratio)
 
     def step(self):
+        collided = False # don't try to apply any other forces in collisions
         for other in self.model.space.get_neighbors(self.pos, 2, False): # 2m neighborhood
             if self.unique_id >= other.unique_id:
                 continue
-            if not self.check_ball_collision(other):
-                self.update_velocity_for_rolling_friction()
+            if self.check_ball_collision(other):
+                collided = True
+        if not collided:
+            self.update_velocity_for_rolling_friction()
+        # do this regardless because walls are absolute
         self.check_wall_collision(self.model.space.width, self.model.space.height)
         self.update_pos_for_velocity(self.model.space.width, self.model.space.height)
 
@@ -119,11 +127,13 @@ class Robot(Thing):
         self.alliance: Alliance = alliance
 
     def step(self):
+        collided = False # don't try to apply any other forces in collisions
         for other in self.model.space.get_neighbors(self.pos, 4, False): # 4m neighborhood
             if self.unique_id >= other.unique_id:
                 continue
-            if not self.check_ball_collision(other):
-                pass
-                #self._velocity += np.random.normal(loc=0.00, scale=0.05, size=2)
+            if self.check_ball_collision(other):
+                collided = True
+        if not collided:
+            self._velocity += np.random.normal(loc=0.00, scale=0.05, size=2)
         self.check_wall_collision(self.model.space.width, self.model.space.height)
         self.update_pos_for_velocity(self.model.space.width, self.model.space.height)
