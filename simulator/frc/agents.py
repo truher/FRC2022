@@ -5,6 +5,12 @@ from .collision import collide, collide_pos, overlap
 
 STEP_SIZE_S = 0.05 # TOOD fix this
 ELASTICITY = 0.25 # ???
+GRAVITY_M_S_S = 9.8
+# measured with video and a few papers
+# http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.311.2690&rep=rep1&type=pdf
+# https://www.resna.org/sites/default/files/conference/2018/wheelchair_seating/Dickey.html
+# https://archive.thepocketlab.com/educators/lesson/rolling-resistance-physics-lab
+ROLLING_FRICTION_COEFFICIENT = 0.0135
 
 class Thing(Agent):
     def __init__(self, unique_id: int, model: 'Model',
@@ -81,12 +87,23 @@ class Cargo(Thing):
         self.radius_m = 0.12
         self.mass_kg = 0.27
 
+
+    def update_velocity_for_rolling_friction(self):
+        accel = GRAVITY_M_S_S * ROLLING_FRICTION_COEFFICIENT
+        dv = accel * STEP_SIZE_S # delta v during this step
+        v_scalar = np.linalg.norm(self._velocity)
+        if dv > v_scalar:
+            self._velocity = 0
+        else:
+            v_ratio = dv / v_scalar
+            self._velocity = np.multiply(self._velocity, 1-v_ratio)
+
     def step(self):
         for other in self.model.space.get_neighbors(self.pos, 2, False): # 2m neighborhood
             if self.unique_id >= other.unique_id:
                 continue
             if not self.check_ball_collision(other):
-                pass
+                self.update_velocity_for_rolling_friction()
         self.check_wall_collision(self.model.space.width, self.model.space.height)
         self.update_pos_for_velocity(self.model.space.width, self.model.space.height)
 
