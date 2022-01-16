@@ -2,6 +2,7 @@ import numpy as np
 from mesa import Model
 from mesa.space import ContinuousSpace
 from mesa.time import RandomActivation
+from mesa.datacollection import DataCollector
 from .agents import Cargo, Obstacle, Robot
 from .alliance import Alliance
 from .collision import overlap
@@ -9,12 +10,24 @@ from .collision import overlap
 X_MAX_M = 16.46
 Y_MAX_M = 8.23
 
+def get_step(model):
+    x = model.schedule.steps
+    return x
+
 class RobotFlockers(Model):
     def __init__(self):
         self.schedule = RandomActivation(self)
         self.space = ContinuousSpace(X_MAX_M, Y_MAX_M, False) # 16x8 meters, not toroidal
         self.make_agents()
+        # datacollector member is needed for charts
+        self.datacollector = DataCollector(
+            model_reporters = {
+                "foo": get_step # key is variable name, value is function name
+            },
+            agent_reporters = {}
+        )
         self.running = True
+        self.datacollector.collect(self)
 
     def is_overlapping(self, pos, r) -> bool:
         for a in self.space._agent_to_index.keys():
@@ -113,3 +126,4 @@ class RobotFlockers(Model):
 
     def step(self):
         self.schedule.step()
+        self.datacollector.collect(self)

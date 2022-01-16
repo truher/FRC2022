@@ -1,4 +1,5 @@
 from mesa.visualization.ModularVisualization import ModularServer
+from mesa.visualization.modules import ChartModule, TextElement
 from mesa import Agent
 import numpy as np
 
@@ -34,7 +35,21 @@ def robot_draw(agent: Agent) -> dict:
     }
    
 
+class SomeText(TextElement):
+    #def __init__(self, portrayal_method)
+    def render(self, model):
+        return f"steps so far: {model.datacollector.model_vars['foo'][-1]}"
+
+
 robot_canvas = SimpleCanvas(robot_draw, 1646, 823)
+test_chart = ChartModule(
+    [
+        {"Label": "foo", "Color": "red"}
+    ]
+)
+text_element = SomeText()
 model_params = { }
 
-server = ModularServer(RobotFlockers, [robot_canvas], "Robots", model_params)
+server = ModularServer(
+    RobotFlockers, [robot_canvas, text_element, test_chart], "Robots", model_params
+)
