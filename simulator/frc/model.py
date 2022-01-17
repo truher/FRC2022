@@ -22,17 +22,25 @@ class RobotFlockers(Model):
                 "time": lambda m: m.model_time,
                 "mean_speed": lambda m: m.mean_speed,
                 "blue_terminal_population": lambda m: m.blue_terminal.length,
-                "red_terminal_population": lambda m: m.red_terminal.length
+                "red_terminal_population": lambda m: m.red_terminal.length,
+                "out_of_bounds_population": lambda m: m.out_of_bounds.length
             },
             agent_reporters = {
                 "speed": lambda a: a.speed # time series doesn't work for agent data
             }
         )
 
-        self.blue_terminal = Delay(5) # seconds
-        self.red_terminal = Delay(5) # seconds
-        self.lower_hub = Delay(5) # seconds
-        self.upper_hub = Delay(7) # seconds
+        # terminal retrieval is a five-second task, two workers
+        self.blue_terminal = Delay(5, 2/5)
+        self.red_terminal = Delay(5, 2/5)
+        # manual says return in 5 seconds, four shallow ramps though
+        self.lower_hub = Delay(5, 4/5)
+        # manual says return in 7 seconds, four shallow ramps though
+        self.upper_hub = Delay(7, 4/7)
+
+        # TODO: make wall collisions respect altitude
+        # TODO: do this as four separate delays
+        self.out_of_bounds = Delay(5, 2/5)
 
         self.running = True
         self.datacollector.collect(self)
@@ -164,14 +172,23 @@ class RobotFlockers(Model):
         # ramp potential energy is ~0.5J, which is 2m/s, probably an overestimate, but human
         # players can also add energy
         # TODO: add altitude here
-        for cargo in self.blue_terminal.select(self.model_time):
-            cargo._velocity = np.array((2, -2))
-            self.space.place_agent(cargo, (2, Y_MAX_M - 2))
-            self.schedule.add(cargo)
-        for cargo in self.red_terminal.select(self.model_time):
-            cargo._velocity = np.array((-2, 2))
-            self.space.place_agent(cargo, (X_MAX_M - 2, 2))
-            self.schedule.add(cargo)
+        bc = self.blue_terminal.get(self.model_time)
+        if bc is not None:
+            bc._velocity = np.array((2, -2))
+            self.space.place_agent(bc, (2, Y_MAX_M - 2))
+            self.schedule.add(bc)
+        rc = self.red_terminal.get(self.model_time)
+        if rc is not None:
+            rc._velocity = np.array((-2, 2))
+            self.space.place_agent(rc, (X_MAX_M - 2, 2))
+            self.schedule.add(rc)
+        oc = self.out_of_bounds.get(self.model_time)
+        if oc is not None:
+            # TODO: re-enter somewhere close to where you went out
+            # FIXME for now just duplicate one of the terminals
+            oc._velocity = np.array((-2, 2))
+            self.space.place_agent(oc, (X_MAX_M - 2, 2))
+            self.schedule.add(oc)
 
         self.schedule.step()
         self.datacollector.collect(self)

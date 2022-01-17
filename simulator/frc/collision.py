@@ -12,7 +12,8 @@ def overlap(p1: ArrayLike, p2: ArrayLike, r1: float, r2: float) -> bool:
 def collide(p1: ArrayLike, v1: ArrayLike, m1: float, e1: float,
             p2: ArrayLike, v2: ArrayLike, m2: float, e2: float) -> Tuple[ArrayLike, ArrayLike]:
 
-    e: float = max(e1, e2) # max so that balls are bouncy but robots are not
+    # FIXME: max so that balls are bouncy but robots are not, this is clearly wrong
+    e: float = max(e1, e2)
     d: ArrayLike = np.subtract(p2, p1)
 
     unit_normal_vector: ArrayLike = np.divide(d, np.linalg.norm(d))

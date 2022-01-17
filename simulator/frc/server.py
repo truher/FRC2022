@@ -37,10 +37,12 @@ class SomeText(TextElement):
         seconds = time % 60
         blue_terminal = model.datacollector.model_vars['blue_terminal_population'][-1]
         red_terminal = model.datacollector.model_vars['red_terminal_population'][-1]
+        out_of_bounds = model.datacollector.model_vars['out_of_bounds_population'][-1]
         return (
             f"Model time: {minutes:.0f}:{seconds:05.2f}<br>"
-            f"blue_terminal_population: {blue_terminal:.0f}<br>"
-            f"red_terminal_population: {red_terminal:.0f}"
+            f"Blue terminal population: {blue_terminal:.0f}<br>"
+            f"Red terminal population: {red_terminal:.0f}<br>"
+            f"Out of bounds population: {out_of_bounds:.0f}<br>"
         )
 
 
