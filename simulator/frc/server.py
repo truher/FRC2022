@@ -21,8 +21,8 @@ def robot_draw(agent: Agent) -> dict:
             "h": 2*agent.radius_m/8.23,
             "angle": np.arctan2(agent._velocity[1], agent._velocity[0]),
             "color": agent.alliance.color,
-            "slot1": agent.slot1.alliance.color if agent.slot1 else Alliance.NULL.color,
-            "slot2": agent.slot2.alliance.color if agent.slot1 else Alliance.NULL.color
+            "slot1": Alliance.NULL.color if agent.slot1 is None else agent.slot1.alliance.color,
+            "slot2": Alliance.NULL.color if agent.slot2 is None else agent.slot2.alliance.color,
         }
     return {
         "Shape": "circle",

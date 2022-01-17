@@ -127,7 +127,21 @@ class Robot(Thing):
         self.slot1 = None
         self.slot2 = None
 
+    def have_space(self) -> bool:
+        return self.slot1 is None or self.slot2 is None
+
     def step(self):
+        # pick up nearby balls
+        if self.have_space():
+            for item in self.model.space.get_neighbors(self.pos, 0.75, False):
+                if isinstance(item, Cargo):
+                    print("pick up cargo")
+                    self.model.space.remove_agent(item)
+                    self.model.schedule.remove(item)
+                    if self.slot1 is None:
+                        self.slot1 = item
+                    else:
+                        self.slot2 = item
         collided = False # don't try to apply any other forces in collisions
         for other in self.model.space.get_neighbors(self.pos, 4, False): # 4m neighborhood
             if self.unique_id >= other.unique_id:
