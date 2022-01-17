@@ -3,6 +3,12 @@ from mesa import Agent
 from .alliance import Alliance
 from .collision import collide, collide_pos, overlap
 
+# TODO: do this differently
+X_MAX_M = 16.46
+Y_MAX_M = 8.23
+CENTER = np.array((X_MAX_M/2, Y_MAX_M/2))
+
+
 ELASTICITY = 0.25 # ???
 GRAVITY_M_S_S = 9.8
 # measured with video and a few papers
@@ -124,24 +130,49 @@ class Robot(Thing):
         self.radius_m = 0.50
         self.mass_kg = 56 # max allowed
         self.alliance: Alliance = alliance
-        self.slot1 = None
+        self.slot1 = None # TODO: just make this a list
         self.slot2 = None
 
-    def have_space(self) -> bool:
-        return self.slot1 is None or self.slot2 is None
-
     def step(self):
-        # pick up nearby balls
-        if self.have_space():
-            for item in self.model.space.get_neighbors(self.pos, 0.75, False):
-                if isinstance(item, Cargo):
-                    print("pick up cargo")
+        # pick up nearby balls TODO: make this a process that takes time
+        for item in self.model.space.get_neighbors(self.pos, 0.75, False):
+            if isinstance(item, Cargo):
+                if self.slot1 is None:
+                    self.slot1 = item
                     self.model.space.remove_agent(item)
                     self.model.schedule.remove(item)
-                    if self.slot1 is None:
-                        self.slot1 = item
-                    else:
-                        self.slot2 = item
+                    break
+                if self.slot2 is None:
+                    self.slot2 = item
+                    self.model.space.remove_agent(item)
+                    self.model.schedule.remove(item)
+                    break
+                break # no space, stop iterating
+
+        # shoot balls randomly
+        # TODO: make this take time
+        # TODO: pay attention to color
+        # TODO: altitude
+        # TODO: shot velocity depends on distance
+        if self.slot1 is not None or self.slot2 is not None:
+            to_center_v = np.subtract(CENTER, self.pos)
+            to_center_dir = np.divide(to_center_v, np.linalg.norm(to_center_v))
+            velocity = np.multiply(12, to_center_dir) # 12 m/s towards the middle
+            newpos = np.add(np.multiply(self.radius_m + 0.14, to_center_dir), self.pos)
+        if self.slot1 is not None:
+            print("shoot 1")
+            self.slot1._velocity = velocity
+            self.model.space.place_agent(self.slot1, newpos)
+            self.model.schedule.add(self.slot1)
+            self.slot1 = None
+        elif self.slot2 is not None:
+            print("shoot 2")
+            self.slot2._velocity = velocity
+            self.model.space.place_agent(self.slot2, newpos)
+            self.model.schedule.add(self.slot2)
+            self.slot2 = None
+
+
         collided = False # don't try to apply any other forces in collisions
         for other in self.model.space.get_neighbors(self.pos, 4, False): # 4m neighborhood
             if self.unique_id >= other.unique_id:
