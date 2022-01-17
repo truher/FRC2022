@@ -35,13 +35,26 @@ class SomeText(TextElement):
         time = model.datacollector.model_vars['time'][-1]
         minutes = time // 60
         seconds = time % 60
-        return f"Model time: {minutes:.0f}:{seconds:05.2f}"
+        blue_terminal = model.datacollector.model_vars['blue_terminal_population'][-1]
+        red_terminal = model.datacollector.model_vars['red_terminal_population'][-1]
+        return (
+            f"Model time: {minutes:.0f}:{seconds:05.2f}<br>"
+            f"blue_terminal_population: {blue_terminal:.0f}<br>"
+            f"red_terminal_population: {red_terminal:.0f}"
+        )
 
 
 robot_canvas = SimpleCanvas(robot_draw, 1646, 823)
 speed_chart = ChartModule(
     [
         {"Label": "mean_speed", "Color": "red"}
+    ]
+)
+# this seems *really* slow, pegs chrome
+delay_chart = ChartModule(
+    [
+        {"Label": "blue_terminal_population", "Color": "blue"},
+        {"Label": "red_terminal_population", "Color": "red"}
     ]
 )
 #test_chart = ChartModule(

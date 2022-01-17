@@ -1,11 +1,15 @@
 from collections import deque
-from typing import Any, Deque, Tuple
+from typing import Any, Deque, List, Tuple
 
 class Delay():
     def __init__(self, latency: float) -> None:
         self.latency: float = latency
         self.latest_time: float = 0
         self.deque: Deque[Tuple[Any, float]] = deque()
+
+    @property
+    def length(self) -> int:
+        return len(self.deque)
 
     def put(self, item: Any, item_time: float) -> None:
         if item_time < self.latest_time: # inserts must be in time order
@@ -22,3 +26,11 @@ class Delay():
         if as_of > item_time + self.latency:
             return self.deque.popleft()[0]
         return None
+
+    def select(self, as_of: float) -> List[Any]:
+        result: List[Any] = []
+        while True:
+            x = self.get(as_of)
+            if x is None:
+                return result
+            result.append(x)

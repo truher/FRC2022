@@ -6,6 +6,7 @@ from mesa.datacollection import DataCollector
 from .agents import Cargo, Obstacle, Robot
 from .alliance import Alliance
 from .collision import overlap
+from .delay import Delay
 
 X_MAX_M = 16.46
 Y_MAX_M = 8.23
@@ -19,12 +20,20 @@ class RobotFlockers(Model):
         self.datacollector = DataCollector(
             model_reporters = { # key: variable name, value: function
                 "time": lambda m: m.model_time,
-                "mean_speed": lambda m: m.mean_speed
+                "mean_speed": lambda m: m.mean_speed,
+                "blue_terminal_population": lambda m: m.blue_terminal.length,
+                "red_terminal_population": lambda m: m.red_terminal.length
             },
             agent_reporters = {
                 "speed": lambda a: a.speed # time series doesn't work for agent data
             }
         )
+
+        self.blue_terminal = Delay(5) # seconds
+        self.red_terminal = Delay(5) # seconds
+        self.lower_hub = Delay(5) # seconds
+        self.upper_hub = Delay(7) # seconds
+
         self.running = True
         self.datacollector.collect(self)
 
@@ -140,6 +149,30 @@ class RobotFlockers(Model):
             self.place_cargo(i, pos, Alliance.BLUE)
 
     def step(self):
+        # move balls into terminal delays
+        for item in self.space.get_neighbors((0, Y_MAX_M), 1.75, False): # blue terminal
+            if isinstance(item, Cargo):
+                self.space.remove_agent(item)
+                self.schedule.remove(item)
+                self.blue_terminal.put(item, self.model_time)
+        for item in self.space.get_neighbors((X_MAX_M, 0), 1.75, False): # red terminal
+            if isinstance(item, Cargo):
+                self.space.remove_agent(item)
+                self.schedule.remove(item)
+                self.red_terminal.put(item, self.model_time)
+        # spit out any available cargo
+        # ramp potential energy is ~0.5J, which is 2m/s, probably an overestimate, but human
+        # players can also add energy
+        # TODO: add altitude here
+        for cargo in self.blue_terminal.select(self.model_time):
+            cargo._velocity = np.array((2, -2))
+            self.space.place_agent(cargo, (2, Y_MAX_M - 2))
+            self.schedule.add(cargo)
+        for cargo in self.red_terminal.select(self.model_time):
+            cargo._velocity = np.array((-2, 2))
+            self.space.place_agent(cargo, (X_MAX_M - 2, 2))
+            self.schedule.add(cargo)
+
         self.schedule.step()
         self.datacollector.collect(self)
 
@@ -151,8 +184,8 @@ class CalRobotFlockers(RobotFlockers):
     # override
     def make_agents(self):
         # one ball with initial velocity
-        pos = np.array([1, Y_MAX_M/2])
+        pos = np.array((1, Y_MAX_M/2))
         cargo = Cargo(0, self, pos, Alliance.BLUE)
-        cargo._velocity = np.array([2, 0])
+        cargo._velocity = np.array((2, 0))
         self.space.place_agent(cargo, pos)
         self.schedule.add(cargo)

@@ -19,5 +19,15 @@ class TestDelay(unittest.TestCase):
         self.assertEqual("foo", x.get(16)) # duplicate items is fine
         self.assertIsNone(x.get(16))
 
+    def test_delay(self) -> None:
+        x = Delay(5)
+        x.put("foo0", 0)
+        x.put("foo1", 1)
+        x.put("foo2", 2)
+        x.put("foo3", 3)
+        self.assertEqual(4, x.length)
+        y = x.select(6.5)
+        self.assertEqual(2, len(y))
+
 if __name__ == '__main__':
     unittest.main()
