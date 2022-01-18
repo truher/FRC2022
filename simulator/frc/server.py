@@ -7,18 +7,21 @@ from .agents import Cargo, Robot
 from .alliance import Alliance
 from .model import CalRobotFlockers, RobotFlockers
 from .SimpleContinuousModule import SimpleCanvas
+from .Simple3dContinuousModule import Simple3dCanvas
 
+# renderer scale is just meters, just like the back end
 def robot_draw(agent: Agent) -> dict:
     if isinstance(agent, Cargo):
         return {
             "Shape": "cargo",
-            "color": agent.alliance.color
+            "color": agent.alliance.color,
+            "z": agent.z_m 
         }
     if isinstance(agent, Robot):
         return {
             "Shape": "robot",
-            "w": 2*agent.radius_m/16.46, # unit = fraction of the field FIXME
-            "h": 2*agent.radius_m/8.23,
+            "w": 2 * agent.radius_m,
+            "h": 2 * agent.radius_m,
             "angle": np.arctan2(agent._velocity[1], agent._velocity[0]),
             "color": agent.alliance.color,
             "slot1": Alliance.NULL.color if agent.slot1 is None else agent.slot1.alliance.color,
@@ -26,7 +29,7 @@ def robot_draw(agent: Agent) -> dict:
         }
     return {
         "Shape": "circle",
-        "r": agent.radius_m * 100, # FIXME assumes canvas size
+        "r": agent.radius_m,
         "color": "gray"
     }
 
@@ -47,18 +50,19 @@ class SomeText(TextElement):
 
 
 robot_canvas = SimpleCanvas(robot_draw, 1646, 823)
-speed_chart = ChartModule(
-    [
-        {"Label": "mean_speed", "Color": "red"}
-    ]
-)
+robot_canvas_2 = Simple3dCanvas(robot_draw, 1646, 823)
+#speed_chart = ChartModule(
+#    [
+#        {"Label": "mean_speed", "Color": "red"}
+#    ]
+#)
 # this seems *really* slow, pegs chrome
-delay_chart = ChartModule(
-    [
-        {"Label": "blue_terminal_population", "Color": "blue"},
-        {"Label": "red_terminal_population", "Color": "red"}
-    ]
-)
+#delay_chart = ChartModule(
+#    [
+#        {"Label": "blue_terminal_population", "Color": "blue"},
+#        {"Label": "red_terminal_population", "Color": "red"}
+#    ]
+#)
 #test_chart = ChartModule(
 #    [
 #        {"Label": "time", "Color": "red"}
@@ -76,6 +80,6 @@ model_params = {
 }
 
 server = ModularServer(
-    RobotFlockers, [robot_canvas, text_element], "Robots", model_params
+    RobotFlockers, [robot_canvas, robot_canvas_2, text_element], "Robots", model_params
     #CalRobotFlockers, [robot_canvas, text_element, speed_chart], "Robots", model_params
 )

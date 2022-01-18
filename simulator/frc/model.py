@@ -175,11 +175,15 @@ class RobotFlockers(Model):
         bc = self.blue_terminal.get(self.model_time)
         if bc is not None:
             bc._velocity = np.array((2, -2))
+            bc.vz_m_s = 0
+            bc.z_m = 1.57
             self.space.place_agent(bc, (2, Y_MAX_M - 2))
             self.schedule.add(bc)
         rc = self.red_terminal.get(self.model_time)
         if rc is not None:
             rc._velocity = np.array((-2, 2))
+            rc.vz_m_s = 0
+            rc.z_m = 1.57
             self.space.place_agent(rc, (X_MAX_M - 2, 2))
             self.schedule.add(rc)
         oc = self.out_of_bounds.get(self.model_time)
@@ -187,6 +191,8 @@ class RobotFlockers(Model):
             # TODO: re-enter somewhere close to where you went out
             # FIXME for now just duplicate one of the terminals
             oc._velocity = np.array((-2, 2))
+            oc.vz_m_s = 0
+            oc.z_m = 1.57
             self.space.place_agent(oc, (X_MAX_M - 2, 2))
             self.schedule.add(oc)
 

@@ -152,6 +152,10 @@ class Cargo(Thing):
             v_ratio = dv / v_scalar
             self._velocity = np.multiply(self._velocity, 1-v_ratio)
 
+    # TODO: also air resistance
+    def update_v_z_for_gravity(self):
+        self.vz_m_s -= GRAVITY_M_S_S * self.model.seconds_per_step
+
     def step(self):
         collided = False # don't try to apply any other forces in collisions
         for other in self.model.space.get_neighbors(self.pos, 2, False): # 2m neighborhood
@@ -161,6 +165,7 @@ class Cargo(Thing):
                 collided = True
         if not collided:
             self.update_velocity_for_rolling_friction()
+            self.update_v_z_for_gravity()
         # do this regardless because walls are absolute
         self.check_wall_collision(self.model.space.width, self.model.space.height)
         self.update_pos_for_velocity(self.model.space.width, self.model.space.height)
