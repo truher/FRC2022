@@ -212,3 +212,14 @@ class CalRobotFlockers(RobotFlockers):
         cargo._velocity = np.array((2, 0))
         self.space.place_agent(cargo, pos)
         self.schedule.add(cargo)
+
+class CalV(RobotFlockers):
+    #override
+    def make_agents(self):
+        # one ball in the air, to test gravity
+        pos = (1, 1)
+        cargo = Cargo(0, self, pos, Alliance.BLUE)
+        cargo._velocity = np.array((0, 0))
+        cargo.z_m = 2 # 1 meter
+        self.space.place_agent(cargo, pos)
+        self.schedule.add(cargo)

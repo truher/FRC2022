@@ -5,7 +5,7 @@ import numpy as np
 
 from .agents import Cargo, Robot
 from .alliance import Alliance
-from .model import CalRobotFlockers, RobotFlockers
+from .model import CalRobotFlockers, CalV, RobotFlockers
 from .SimpleContinuousModule import SimpleCanvas
 from .Simple3dContinuousModule import Simple3dCanvas
 
@@ -80,6 +80,8 @@ model_params = {
 }
 
 server = ModularServer(
-    RobotFlockers, [robot_canvas, robot_canvas_2, text_element], "Robots", model_params
+    #CalV, [robot_canvas, robot_canvas_2], "Robots", model_params
     #CalRobotFlockers, [robot_canvas, text_element, speed_chart], "Robots", model_params
+    RobotFlockers, [robot_canvas, robot_canvas_2, text_element], "Robots", model_params
 )
+server.verbose = False

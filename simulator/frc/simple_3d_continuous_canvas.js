@@ -23,13 +23,17 @@ var Continuous3dVisualization = function() {
         scene = new THREE.Scene();
         scene.background = new THREE.Color("white")
         scene.scale.set(1, -1, 1); // emulate "video" coord system which has reversed y axis
+
         camera = new THREE.PerspectiveCamera( 60, 1646/823, 1, 10000 );
-        camera.position.set( 0, 0, 200 );
+        // reverse camera y axis too
         camera.up.set(0,0,1);
-        camera.lookAt(500,500,0);
+        camera.position.set(8, -4, 10);
+
         controls = new OrbitControls( camera, renderer.domElement );
         // avoid the ground
         controls.maxPolarAngle = Math.PI/2; 
+        controls.target = new THREE.Vector3(16.46/2, -8.23/2, 0);
+        controls.autoRotate = true;
     
         // lighting
         scene.add(new THREE.AmbientLight( 0xffffff, 0.5 ));
@@ -54,7 +58,6 @@ var Continuous3dVisualization = function() {
     this.draw = function(objects) {
         group.clear(); // the group contains all the updatable objects
 
-        console.log(objects);
         for (var i in objects) {
             var p = objects[i];
             if (p.Shape == "robot") this.drawRobot(p);
@@ -108,6 +111,7 @@ var Continuous3dVisualization = function() {
 
     this.animate = function() {
         requestAnimationFrame(() => this.animate() );
+        controls.update();
         renderer.render(scene, camera);
     };
 };
@@ -118,7 +122,6 @@ var Simple_3d_Continuous_Module = function() {
     canvasDraw2.animate();
 
     this.render = function(data) {
-        console.log("hi");
         canvasDraw2.draw(data);
     };
 };

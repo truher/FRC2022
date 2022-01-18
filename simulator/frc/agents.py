@@ -29,7 +29,7 @@ class Thing(Agent):
         pos, elasticity
     ) -> None:
         super().__init__(unique_id, model)
-        self.pos = np.array(pos) # TODO: remove this, place_agent does it.
+        self.pos = pos # TODO: remove this, place_agent does it.
         self.elasticity = elasticity
         self._velocity = np.zeros(2)
         self.z_m = 0
@@ -57,6 +57,7 @@ class Thing(Agent):
         self.z_m += self.vz_m_s * self.model.seconds_per_step
         # don't go through the floor
         if self.z_m < 0:
+            self.vz_m_s = -self.vz_m_s * VERTICAL_ELASTICITY
             self.z_m = 0
 
     def is_colliding(self, other):
@@ -187,6 +188,9 @@ class Robot(Thing):
         # pick up nearby balls TODO: make this a process that takes time
         for item in self.model.space.get_neighbors(self.pos, 0.75, False):
             if isinstance(item, Cargo):
+                # can only pick up balls that are close to the floor
+                if item.z_m > 0.4:
+                    continue
                 if self.slot1 is None:
                     self.slot1 = item
                     self.model.space.remove_agent(item)
@@ -210,14 +214,12 @@ class Robot(Thing):
             velocity = np.multiply(12, to_center_dir) # 12 m/s towards the middle
             newpos = np.add(np.multiply(self.radius_m + 0.14, to_center_dir), self.pos)
         if self.slot1 is not None:
-            print("shoot 1")
             self.slot1._velocity = velocity
             self.slot1.vz_m_s = 7 # TODO: ballistics
             self.model.space.place_agent(self.slot1, newpos)
             self.model.schedule.add(self.slot1)
             self.slot1 = None
         elif self.slot2 is not None:
-            print("shoot 2")
             self.slot2._velocity = velocity
             self.slot2.vz_m_s = 7 # TODO: ballistics
             self.model.space.place_agent(self.slot2, newpos)
