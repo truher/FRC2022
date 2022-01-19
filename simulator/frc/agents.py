@@ -100,6 +100,8 @@ class Thing(Agent):
             self.vz_m_s = -self.vz_m_s * VERTICAL_ELASTICITY
 
     def check_ball_collision(self, other) -> bool: # if actually colliding
+        if isinstance(self, Obstacle) and isinstance(other, Obstacle):
+            return False
         if not self.is_colliding(other):
             return False
         # balls above robots don't collide (with each other either)
@@ -115,13 +117,19 @@ class Thing(Agent):
             other.pos, other.mass_kg, other.radius_m)
         return True
 
+# TODO: lower height too, for upper hub
 class Obstacle(Thing):
     """ has infinite mass """
-    def __init__(self, unique_id: int, model: 'Model', pos) -> None:
+    def __init__(self, unique_id: int, model: 'Model', pos,
+        radius_m: float, z_height_m: float
+    ) -> None:
         super().__init__(unique_id, model, pos, 1.0)
         self.pos = np.array(pos)
-        self.radius_m = 0.045 # terminal posts are  ~4.5cm wide
+        #self.radius_m = 0.045 # terminal posts are  ~4.5cm wide
+        self.radius_m = radius_m
         self.mass_kg = np.inf
+        self.z_height_m = z_height_m
+        self.z_altitude_m = 0 # off the floor
 
     def step(self): # override: never moves, so just check collisions
         for other in self.model.space.get_neighbors(self.pos, 4, False): # 2m neighborhood

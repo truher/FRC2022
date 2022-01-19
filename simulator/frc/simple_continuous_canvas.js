@@ -10,9 +10,14 @@ var ContinuousVisualization = function(width, height, context) {
 			var p = objects[i];
 			if (p.Shape == "robot") this.drawRobot(p);
 			else if (p.Shape == "cargo") this.drawCargo(p);
+			else if (p.Shape == "obstacle") this.drawObstacle(p);
 			else this.drawCircle(p.x, p.y, p.r, p.color);
 		};
 	};
+
+        this.drawObstacle = function(p) {
+	     this.drawCircle(p.x, p.y, p.r, "gray");
+        };
 
 	this.drawCircle = function(x, y, radius, color) {
 		var cx = x * 100;
@@ -22,8 +27,11 @@ var ContinuousVisualization = function(width, height, context) {
 		context.beginPath();
 		context.arc(cx, cy, r, 0, Math.PI * 2, false);
 		context.closePath();
-		context.fillStyle = color;
-		context.fill();
+                context.lineWidth = 2;
+		context.strokeStyle = color;
+		context.stroke();
+		//context.fillStyle = color;
+		//context.fill();
 	};
 
 	this.drawCargo = function(p) {

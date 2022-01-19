@@ -67,9 +67,9 @@ class RobotFlockers(Model):
                 return True
         return False
 
-    def place_obstacle(self, i, pos, radius_m):
-        obstacle = Obstacle(i, self, pos)
-        obstacle.radius_m = radius_m
+    # TODO: lower height too, for upper hub
+    def place_obstacle(self, i, pos, radius_m, z_height_m):
+        obstacle = Obstacle(i, self, pos, radius_m, z_height_m)
         self.space.place_agent(obstacle, pos)
         self.schedule.add(obstacle)
 
@@ -86,34 +86,58 @@ class RobotFlockers(Model):
         self.schedule.add(cargo)
 
     def make_agents(self):
-        # the hub
+        # the hub is several obstacles
+        # rotate 20 degrees ccw
         ctr = np.array((X_MAX_M/2, Y_MAX_M/2))
-        self.place_obstacle(300, ctr, 1.72)
+        # one for the lower hub and fenders
+        self.place_obstacle(300, ctr, 0.86, 1.04)
+        # one for the upper hub
+        self.place_obstacle(301, ctr, 0.67, 2.64) # opening is 122, rim is 6
+        # lower exits
+        rot_rad = 0.35
+        o_m = 1.36
+        cos_o_m = o_m * np.cos(rot_rad)
+        sin_o_m = o_m * np.sin(rot_rad)
+        self.place_obstacle(302, ctr + (-sin_o_m, -cos_o_m), 0.19, 0.57)
+        self.place_obstacle(303, ctr + (-cos_o_m, sin_o_m), 0.19, 0.57)
+        self.place_obstacle(304, ctr + (sin_o_m, cos_o_m), 0.19, 0.57)
+        self.place_obstacle(305, ctr + (cos_o_m, -sin_o_m), 0.19, 0.57)
+        # posts
+        p_m = 0.95
+        cos_p_m = p_m * np.cos(rot_rad)
+        sin_p_m = p_m * np.sin(rot_rad)
+        self.place_obstacle(306, ctr + (-sin_p_m, -cos_p_m), 0.19, 1.71)
+        self.place_obstacle(307, ctr + (-cos_p_m, sin_p_m), 0.19, 1.71)
+        self.place_obstacle(308, ctr + (sin_p_m, cos_p_m), 0.19, 1.71)
+        self.place_obstacle(309, ctr + (cos_p_m, -sin_p_m), 0.19, 1.71)
+
 
         # blue hangar upper left
         H_R = 0.2 # post radius 20cm
         H_X = 3.07 # x dimension 3.07m
         H_Y = 2.75 # y dimension 2.75m
-        self.place_obstacle(2000, (H_R, H_R), H_R)
-        self.place_obstacle(2001, (H_X - H_R, H_R), H_R)
-        self.place_obstacle(2002, (H_X - H_R, H_Y - H_R), H_R)
-        self.place_obstacle(2003, (H_R, H_Y - H_R), H_R)
+        self.place_obstacle(2000, (H_R, H_R), H_R, 1.88)
+        self.place_obstacle(2001, (H_X - H_R, H_R), H_R, 1.88)
+        self.place_obstacle(2002, (H_X - H_R, H_Y - H_R), H_R, 1.88)
+        self.place_obstacle(2003, (H_R, H_Y - H_R), H_R, 1.88)
 
         # red hangar lower right
-        self.place_obstacle(2004, (X_MAX_M - H_R, Y_MAX_M - H_R), H_R)
-        self.place_obstacle(2005, (X_MAX_M - H_X + H_R, Y_MAX_M - H_R), H_R)
-        self.place_obstacle(2006, (X_MAX_M - H_X + H_R, Y_MAX_M - H_Y + H_R), H_R)
-        self.place_obstacle(2007, (X_MAX_M - H_R, Y_MAX_M - H_Y + H_R), H_R)
+        self.place_obstacle(2004, (X_MAX_M - H_R, Y_MAX_M - H_R), H_R, 1.88)
+        self.place_obstacle(2005, (X_MAX_M - H_X + H_R, Y_MAX_M - H_R), H_R, 1.88)
+        self.place_obstacle(2006, (X_MAX_M - H_X + H_R, Y_MAX_M - H_Y + H_R), H_R, 1.88)
+        self.place_obstacle(2007, (X_MAX_M - H_R, Y_MAX_M - H_Y + H_R), H_R, 1.88)
 
-        T_R = 0.0225 # post diameter m
+        # terminals
+        # TODO: handle the front wall and roof somehow
+        T_R = 0.0225 # post radius m
         T_D = 1.75 # X and Y extent m
         i = 3000
         for p in np.linspace(T_R, T_D-T_R, 6):
             # blue terminal lower left
-            self.place_obstacle(i, (p, Y_MAX_M - T_D + p), T_R)
+            self.place_obstacle(i, (p, Y_MAX_M - T_D + p), T_R, 0.3)
             i += 1
             # red terminal upper right
-            self.place_obstacle(i, (X_MAX_M -T_D + p, p), T_R)
+            self.place_obstacle(i, (X_MAX_M -T_D + p, p), T_R, 0.3)
             i += 1
  
         # red robots

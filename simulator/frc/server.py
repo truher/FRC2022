@@ -3,7 +3,7 @@ from mesa.visualization.modules import BarChartModule, ChartModule, TextElement
 from mesa import Agent
 import numpy as np
 
-from .agents import Cargo, Robot
+from .agents import Cargo, Robot, Obstacle
 from .alliance import Alliance
 from .model import CalRobotFlockers, CalV, RobotFlockers
 from .SimpleContinuousModule import SimpleCanvas
@@ -24,8 +24,16 @@ def robot_draw(agent: Agent) -> dict:
             "h": 2 * agent.radius_m,
             "angle": np.arctan2(agent._velocity[1], agent._velocity[0]),
             "color": agent.alliance.color,
-            "slot1": Alliance.NULL.color if agent.slot1 is None else agent.slot1.alliance.color,
-            "slot2": Alliance.NULL.color if agent.slot2 is None else agent.slot2.alliance.color,
+            "slot1": (Alliance.NULL.color if agent.slot1 is None
+                     else agent.slot1.alliance.color),
+            "slot2": (Alliance.NULL.color if agent.slot2 is None
+                     else agent.slot2.alliance.color),
+        }
+    if isinstance(agent, Obstacle):
+        return {
+            "Shape": "obstacle",
+            "h": agent.z_height_m,
+            "r": agent.radius_m,
         }
     return {
         "Shape": "circle",
