@@ -71,5 +71,17 @@ class TestBucket(unittest.TestCase):
         self.assertAlmostEqual(np.arctan2(1,2), x.theta_rad)
         self.assertAlmostEqual(2, x.height)
 
+    def test_closest_point(self) -> None:
+        x = Bucket.make_bucket(1, 2, 1)
+        np.testing.assert_almost_equal((1.5, 0, 0.5), x.closest_point((1, 0, 1)))
+        # outside?
+        np.testing.assert_almost_equal((1.5, 0, 0.5), x.closest_point((2, 0, 0)))
+        np.testing.assert_almost_equal((1, 0, 0), x.closest_point((0.5, 0, 0.5)))
+        np.testing.assert_almost_equal((0, 1, 0), x.closest_point((0, 0.5, 0.5)))
+        with self.assertRaises(ValueError):
+            x.closest_point((0, 0, 1))
+        x = Bucket.make_bucket(1, 2, 2)
+        np.testing.assert_almost_equal((2,0,2), x.closest_point((1, 0, 2.5)))
+
 if __name__ == '__main__':
     unittest.main()

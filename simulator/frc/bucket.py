@@ -46,3 +46,22 @@ class Bucket():
         d = np.subtract(p, (0, 0, self.vertex))
         dxy = np.hypot(d[0], d[1])
         return np.arctan2(dxy, d[2])
+
+    def closest_point(self,
+        p: Tuple[float, float, float]) -> Tuple[float, float, float]:
+        epsilon = 0.001
+        x = p[0]
+        y = p[1]
+        z = p[2]
+        r = np.sqrt(x * x + y * y)
+        if r < epsilon:
+            raise ValueError("no unique value at the center")
+        extra_z = r * np.tan(self.theta_rad)
+        hypot = z - self.vertex + extra_z
+        s = hypot * np.sin(self.theta_rad) * np.cos(self.theta_rad)
+        sx = s * x / r
+        sy = s * y / r
+        gg = s / np.tan(self.theta_rad)
+        sz = gg + self.vertex
+        return (sx, sy, sz)
+
