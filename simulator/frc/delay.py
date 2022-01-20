@@ -1,5 +1,5 @@
 from collections import deque
-from typing import Any, Deque, List, Tuple
+from typing import Any, Deque, Tuple
 
 class Delay():
     def __init__(self, latency: float, throughput:float) -> None:
@@ -31,9 +31,7 @@ class Delay():
             raise ValueError(f"as_of {as_of} < latest get_time {self.latest_get_time}")
         if dt < self.min_get_period:
             return None
-        item: Any
-        item_time: float
-        item, item_time = self.deque[0]
+        item_time: float = self.deque[0][1]
         if as_of > item_time + self.latency:
             self.latest_get_time = as_of
             return self.deque.popleft()[0]

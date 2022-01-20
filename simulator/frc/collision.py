@@ -1,11 +1,11 @@
 # collision calculations
+from typing import Tuple
 import numpy as np
 from numpy.typing import ArrayLike
-from typing import Tuple
 
 def overlap(p1: ArrayLike, p2: ArrayLike, r1: float, r2: float) -> bool:
     distance_vector = np.subtract(p1, p2)
-    minimum_distance = r1 + r2 
+    minimum_distance = r1 + r2
     distance_scalar = np.linalg.norm(distance_vector)
     return bool(distance_scalar < minimum_distance)
 
@@ -54,7 +54,7 @@ def collide(p1: ArrayLike, v1: ArrayLike, m1: float, e1: float,
 
     return newv1, newv2
 
-# the problem with the velocity approach above is that a collision is detected *after* 
+# the problem with the velocity approach above is that a collision is detected *after*
 # the objects intersect and with an inelastic collisions, the outcome can easily leave
 # the objects still intersected, so the collision is run again, but this time with velocities
 # that don't make sense.  so the objects can collide over and over.
@@ -79,7 +79,4 @@ def collide_pos(p1, m1, r1, p2, m2, r2) -> Tuple[ArrayLike, ArrayLike, ArrayLike
         relative_mass_2 = m2 / (m1 + m2)
         p1_after = np.subtract(p1, np.multiply(relative_mass_2, squish_vector))
         p2_after = np.add(p2, np.multiply(relative_mass_1, squish_vector))
-    if overlap(p1_after, p2_after, r1, r2):
-        new_d: ArrayLike = np.subtract(p2_after, p1_after)
-        new_d_scalar = np.linalg.norm(new_d)
     return p1_after, p2_after

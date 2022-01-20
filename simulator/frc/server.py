@@ -1,12 +1,13 @@
+from typing import Dict
 from mesa.visualization.ModularVisualization import ModularServer # type: ignore
-from mesa.visualization.modules import BarChartModule, ChartModule, TextElement # type: ignore
+from mesa.visualization.modules import TextElement # type: ignore
 from mesa import Agent # type: ignore
 import numpy as np
-from typing import Dict
 
 from .agents import Cargo, Robot, Obstacle # type: ignore
 from .alliance import Alliance # type: ignore
-from .model import CalRobotFlockers, CalV, RobotFlockers # type: ignore
+#from .model import CalRobotFlockers, CalV, RobotFlockers # type: ignore
+from .model import RobotFlockers # type: ignore
 from .SimpleContinuousModule import SimpleCanvas # type: ignore
 from .Simple3dContinuousModule import Simple3dCanvas # type: ignore
 
@@ -16,14 +17,14 @@ def robot_draw(agent: Agent) -> dict:
         return {
             "Shape": "cargo",
             "color": agent.alliance.color,
-            "z": agent.z_m 
+            "z": agent.z_m
         }
     if isinstance(agent, Robot):
         return {
             "Shape": "robot",
             "w": 2 * agent.radius_m,
             "h": 2 * agent.radius_m,
-            "angle": np.arctan2(agent._velocity[1], agent._velocity[0]),
+            "angle": np.arctan2(agent.velocity[1], agent.velocity[0]),
             "color": agent.alliance.color,
             "slot1": (Alliance.NULL.color if agent.slot1 is None
                      else agent.slot1.alliance.color),

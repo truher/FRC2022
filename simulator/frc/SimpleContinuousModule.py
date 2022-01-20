@@ -1,11 +1,11 @@
+from typing import Callable
 from mesa import Agent # type: ignore
 from mesa.visualization.ModularVisualization import VisualizationElement # type: ignore
-from typing import Callable
 
 class SimpleCanvas(VisualizationElement):
     local_includes = ["frc/simple_continuous_canvas.js"]
 
-    def __init__(self,
+    def __init__(self, # pylint: disable=super-init-not-called
         portrayal_method: Callable[[Agent], dict],
         canvas_width: int,
         canvas_height: int

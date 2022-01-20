@@ -1,6 +1,6 @@
-import numpy as np
-from typing import Tuple
 import unittest
+from typing import Tuple
+import numpy as np
 from frc.bucket import Bucket
 from frc.delay import Delay
 

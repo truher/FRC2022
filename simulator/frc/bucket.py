@@ -1,13 +1,9 @@
-"""
-models collisions in the hub bucket
-"""
+""" models collisions in the hub bucket """
 from typing import Tuple
 import numpy as np
 
-"""
-A bucket is a conical frustum facing up with base centered at (0, 0, 0).
-"""
 class Bucket():
+    """ A bucket is a conical frustum facing up with base centered at (0, 0, 0).  """
     def __init__(self):
         self.vertex: float = -2
         self.theta_rad: float = np.pi/4
@@ -39,7 +35,8 @@ class Bucket():
     def is_below_top(self, p: Tuple[float, float, float]) -> bool:
         return p[2] <= self.height
 
-    def is_above_base(self, p: Tuple[float, float, float]) -> bool:
+    @staticmethod
+    def is_above_base(p: Tuple[float, float, float]) -> bool:
         return p[2] >= 0
 
     def angle_rad(self, p: Tuple[float, float, float]) -> float:
@@ -64,4 +61,3 @@ class Bucket():
         gg = s / np.tan(self.theta_rad)
         sz = gg + self.vertex
         return (sx, sy, sz)
-

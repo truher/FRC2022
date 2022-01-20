@@ -30,20 +30,22 @@ class Thing(Agent):
     ) -> None:
         super().__init__(unique_id, model)
         self.pos = pos # TODO: remove this, place_agent does it.
+        self.radius_m: float = 0
+        self.mass_kg: float = 0
         self.elasticity = elasticity
-        self._velocity = np.zeros(2)
-        self.z_m = 0
-        self.vz_m_s = 0
+        self.velocity = np.zeros(2)
+        self.z_m: float = 0
+        self.vz_m_s: float = 0
 
     @property
     def speed(self):
-        return np.linalg.norm(self._velocity)
+        return np.linalg.norm(self.velocity)
 
     def update_pos_for_velocity(self, size_x, size_y):
         if self.pos is None:
             # we're in some delay somewhere
             return
-        self.pos += self._velocity * self.model.seconds_per_step
+        self.pos += self.velocity * self.model.seconds_per_step
         if self.pos[0] <= self.radius_m:
             self.pos[0] = self.radius_m
         elif self.pos[0] >= (x2_bound := (size_x - self.radius_m)):
@@ -70,25 +72,25 @@ class Thing(Agent):
             if self.z_m > END_WALL_HEIGHT_M:
                 out = True
             self.pos[0] = self.radius_m
-            self._velocity[0] = -self._velocity[0] * self.elasticity
+            self.velocity[0] = -self.velocity[0] * self.elasticity
         elif self.pos[0] >= (x2_bound := (size_x - self.radius_m)):
             # red wall 197cm high
             if self.z_m > END_WALL_HEIGHT_M:
                 out = True
             self.pos[0] = x2_bound
-            self._velocity[0] = -self._velocity[0] * self.elasticity
+            self.velocity[0] = -self.velocity[0] * self.elasticity
         if self.pos[1] <= self.radius_m:
             # side wall 51cm high
             if self.z_m > SIDE_WALL_HEIGHT_M:
                 out = True
             self.pos[1] = self.radius_m
-            self._velocity[1] = -self._velocity[1] * self.elasticity
+            self.velocity[1] = -self.velocity[1] * self.elasticity
         elif self.pos[1] >= (y2_bound := (size_y - self.radius_m)):
             # side wall 51cm high
             if self.z_m > SIDE_WALL_HEIGHT_M:
                 out = True
             self.pos[1] = y2_bound
-            self._velocity[1] = -self._velocity[1] * self.elasticity
+            self.velocity[1] = -self.velocity[1] * self.elasticity
         if out:
             self.model.space.remove_agent(self)
             self.model.schedule.remove(self)
@@ -108,10 +110,9 @@ class Thing(Agent):
         # TODO: handle the hub case separately
         if self.z_m > 1.32 or other.z_m > 1.32:
             return False
-        d = np.linalg.norm(self.pos-other.pos)
-        self._velocity, other._velocity = collide(
-            self.pos, self._velocity, self.mass_kg, self.elasticity,
-            other.pos, other._velocity, other.mass_kg, other.elasticity)
+        self.velocity, other.velocity = collide(
+            self.pos, self.velocity, self.mass_kg, self.elasticity,
+            other.pos, other.velocity, other.mass_kg, other.elasticity)
         self.pos, other.pos = collide_pos(
             self.pos, self.mass_kg, self.radius_m,
             other.pos, other.mass_kg, other.radius_m)
@@ -154,12 +155,12 @@ class Cargo(Thing):
             return
         accel = GRAVITY_M_S_S * ROLLING_FRICTION_COEFFICIENT
         dv = accel * self.model.seconds_per_step # delta v during this step
-        v_scalar = np.linalg.norm(self._velocity)
+        v_scalar = np.linalg.norm(self.velocity)
         if dv > v_scalar:
-            self._velocity = np.zeros(2)
+            self.velocity = np.zeros(2)
         else:
             v_ratio = dv / v_scalar
-            self._velocity = np.multiply(self._velocity, 1-v_ratio)
+            self.velocity = np.multiply(self.velocity, 1-v_ratio)
 
     # TODO: also air resistance
     def update_v_z_for_gravity(self):
@@ -222,13 +223,13 @@ class Robot(Thing):
             velocity = np.multiply(12, to_center_dir) # 12 m/s towards the middle
             newpos = np.add(np.multiply(self.radius_m + 0.14, to_center_dir), self.pos)
         if self.slot1 is not None:
-            self.slot1._velocity = velocity
+            self.slot1.velocity = velocity
             self.slot1.vz_m_s = 7 # TODO: ballistics
             self.model.space.place_agent(self.slot1, newpos)
             self.model.schedule.add(self.slot1)
             self.slot1 = None
         elif self.slot2 is not None:
-            self.slot2._velocity = velocity
+            self.slot2.velocity = velocity
             self.slot2.vz_m_s = 7 # TODO: ballistics
             self.model.space.place_agent(self.slot2, newpos)
             self.model.schedule.add(self.slot2)
@@ -242,6 +243,6 @@ class Robot(Thing):
             if self.check_ball_collision(other):
                 collided = True
         if not collided:
-            self._velocity += np.random.normal(loc=0.00, scale=0.05, size=2)
+            self.velocity += np.random.normal(loc=0.00, scale=0.05, size=2)
         self.check_wall_collision(self.model.space.width, self.model.space.height)
         self.update_pos_for_velocity(self.model.space.width, self.model.space.height)

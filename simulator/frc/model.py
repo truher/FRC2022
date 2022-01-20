@@ -13,6 +13,7 @@ Y_MAX_M = 8.23
 
 class RobotFlockers(Model):
     def __init__(self):
+        super().__init__()
         self.schedule = RandomActivation(self)
         self.space = ContinuousSpace(X_MAX_M, Y_MAX_M, False) # 16x8 meters, not toroidal
         self.make_agents()
@@ -62,7 +63,7 @@ class RobotFlockers(Model):
         return self.model_steps * self.seconds_per_step
 
     def is_overlapping(self, pos, r) -> bool:
-        for a in self.space._agent_to_index.keys():
+        for a in self.space._agent_to_index: # pylint: disable=protected-access
             if overlap(pos, a.pos, r, a.radius_m):
                 return True
         return False
@@ -75,13 +76,13 @@ class RobotFlockers(Model):
 
     def place_robot(self, i, pos, alliance):
         robot = Robot(i, self, pos, alliance)
-        robot._velocity = np.random.normal(loc=0.00, scale=0.5, size=2)
+        robot.velocity = np.random.normal(loc=0.00, scale=0.5, size=2)
         self.space.place_agent(robot, pos)
         self.schedule.add(robot)
 
     def place_cargo(self, i, pos, alliance):
         cargo = Cargo(i, self, pos, alliance)
-        cargo._velocity = np.random.normal(loc=0.00, scale=0.5, size=2)
+        cargo.velocity = np.random.normal(loc=0.00, scale=0.5, size=2)
         self.space.place_agent(cargo, pos)
         self.schedule.add(cargo)
 
@@ -139,7 +140,7 @@ class RobotFlockers(Model):
             # red terminal upper right
             self.place_obstacle(i, (X_MAX_M -T_D + p, p), T_R, 0.3)
             i += 1
- 
+
         # red robots
         for i in range(0, 3):
             while True: # avoid overlap
@@ -198,14 +199,14 @@ class RobotFlockers(Model):
         # TODO: add altitude here
         bc = self.blue_terminal.get(self.model_time)
         if bc is not None:
-            bc._velocity = np.array((2, -2))
+            bc.velocity = np.array((2, -2))
             bc.vz_m_s = 0
             bc.z_m = 1.57
             self.space.place_agent(bc, (2, Y_MAX_M - 2))
             self.schedule.add(bc)
         rc = self.red_terminal.get(self.model_time)
         if rc is not None:
-            rc._velocity = np.array((-2, 2))
+            rc.velocity = np.array((-2, 2))
             rc.vz_m_s = 0
             rc.z_m = 1.57
             self.space.place_agent(rc, (X_MAX_M - 2, 2))
@@ -214,7 +215,7 @@ class RobotFlockers(Model):
         if oc is not None:
             # TODO: re-enter somewhere close to where you went out
             # FIXME for now just duplicate one of the terminals
-            oc._velocity = np.array((-2, 2))
+            oc.velocity = np.array((-2, 2))
             oc.vz_m_s = 0
             oc.z_m = 1.57
             self.space.place_agent(oc, (X_MAX_M - 2, 2))
@@ -233,7 +234,7 @@ class CalRobotFlockers(RobotFlockers):
         # one ball with initial velocity
         pos = np.array((1, Y_MAX_M/2))
         cargo = Cargo(0, self, pos, Alliance.BLUE)
-        cargo._velocity = np.array((2, 0))
+        cargo.velocity = np.array((2, 0))
         self.space.place_agent(cargo, pos)
         self.schedule.add(cargo)
 
@@ -243,7 +244,7 @@ class CalV(RobotFlockers):
         # one ball in the air, to test gravity
         pos = (1, 1)
         cargo = Cargo(0, self, pos, Alliance.BLUE)
-        cargo._velocity = np.array((0, 0))
+        cargo.velocity = np.array((0, 0))
         cargo.z_m = 2 # 1 meter
         self.space.place_agent(cargo, pos)
         self.schedule.add(cargo)

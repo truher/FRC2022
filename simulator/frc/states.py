@@ -1,4 +1,4 @@
-import transitions # type: ignore
+#import transitions # type: ignore
 
 states = ['chasing_cargo', 'chasing_bots', 'shooting', 'climbing']
 
