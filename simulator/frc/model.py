@@ -1,13 +1,14 @@
 import numpy as np
 from mesa import Model # type: ignore
-from mesa.space import ContinuousSpace # type: ignore
+#from mesa.space import ContinuousSpace # type: ignore
 from mesa.time import RandomActivation # type: ignore
 from mesa.datacollection import DataCollector # type: ignore
 from numpy.typing import NDArray
-from .agents import Cargo, Obstacle, Robot
+from .agent import Cargo, Obstacle, Robot
 from .alliance import Alliance
 from .collision import overlap
 from .delay import Delay
+from .space import ContinuousSpace # type: ignore
 
 X_MAX_M = 16.46
 Y_MAX_M = 8.23

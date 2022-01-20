@@ -4,7 +4,7 @@ from mesa.visualization.modules import TextElement # type: ignore
 from mesa import Agent, Model # type: ignore
 import numpy as np
 
-from .agents import Cargo, Robot, Obstacle
+from .agent import Cargo, Robot, Obstacle
 from .alliance import Alliance
 #from .model import CalRobotFlockers, CalV, RobotFlockers
 from .model import RobotFlockers
