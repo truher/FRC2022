@@ -3,16 +3,17 @@ from mesa import Model # type: ignore
 from mesa.space import ContinuousSpace # type: ignore
 from mesa.time import RandomActivation # type: ignore
 from mesa.datacollection import DataCollector # type: ignore
-from .agents import Cargo, Obstacle, Robot # type: ignore
-from .alliance import Alliance # type: ignore
-from .collision import overlap # type: ignore
-from .delay import Delay # type: ignore
+from numpy.typing import NDArray
+from .agents import Cargo, Obstacle, Robot
+from .alliance import Alliance
+from .collision import overlap
+from .delay import Delay
 
 X_MAX_M = 16.46
 Y_MAX_M = 8.23
 
-class RobotFlockers(Model):
-    def __init__(self):
+class RobotFlockers(Model): # type:ignore
+    def __init__(self) -> None:
         super().__init__()
         self.schedule = RandomActivation(self)
         self.space = ContinuousSpace(X_MAX_M, Y_MAX_M, False) # 16x8 meters, not toroidal
@@ -47,86 +48,89 @@ class RobotFlockers(Model):
         self.datacollector.collect(self)
 
     @property
-    def mean_speed(self):
-        return np.mean(list(a.speed for a in self.schedule.agents))
+    def mean_speed(self) -> float:
+        return np.mean(list(a.speed for a in self.schedule.agents)) # type:ignore
 
     @property
-    def model_steps(self):
-        return self.schedule.steps
+    def model_steps(self) -> int:
+        return self.schedule.steps # type:ignore
 
     @property
-    def seconds_per_step(self):
+    def seconds_per_step(self) -> float:
         return 0.05
 
     @property
-    def model_time(self):
+    def model_time(self) -> float:
         return self.model_steps * self.seconds_per_step
 
-    def is_overlapping(self, pos, r) -> bool:
+    def is_overlapping(self, pos: NDArray[np.float64], r: float) -> bool:
         for a in self.space._agent_to_index: # pylint: disable=protected-access
             if overlap(pos, a.pos, r, a.radius_m):
                 return True
         return False
 
     # TODO: lower height too, for upper hub
-    def place_obstacle(self, i, pos, radius_m, z_height_m):
+    def place_obstacle(self, i: int, pos: NDArray[np.float64],
+        radius_m: float, z_height_m: float) -> None:
         obstacle = Obstacle(i, self, pos, radius_m, z_height_m)
         self.space.place_agent(obstacle, pos)
         self.schedule.add(obstacle)
 
-    def place_robot(self, i, pos, alliance):
+    def place_robot(self, i: int, pos: NDArray[np.float64],
+        alliance: Alliance) -> None:
         robot = Robot(i, self, pos, alliance)
         robot.velocity = np.random.normal(loc=0.00, scale=0.5, size=2)
         self.space.place_agent(robot, pos)
         self.schedule.add(robot)
 
-    def place_cargo(self, i, pos, alliance):
+    def place_cargo(self, i: int, pos: NDArray[np.float64],
+        alliance: Alliance) -> None:
         cargo = Cargo(i, self, pos, alliance)
         cargo.velocity = np.random.normal(loc=0.00, scale=0.5, size=2)
         self.space.place_agent(cargo, pos)
         self.schedule.add(cargo)
 
-    def make_agents(self):
+    def make_agents(self) -> None:
         # the hub is several obstacles
         # rotate 20 degrees ccw
-        ctr = np.array((X_MAX_M/2, Y_MAX_M/2))
+        ctr: NDArray[np.float64] = np.array((X_MAX_M/2, Y_MAX_M/2))
         # one for the lower hub and fenders
         self.place_obstacle(300, ctr, 0.86, 1.04)
         # one for the upper hub
         self.place_obstacle(301, ctr, 0.67, 2.64) # opening is 122, rim is 6
         # lower exits
-        rot_rad = 0.35
-        o_m = 1.36
-        cos_o_m = o_m * np.cos(rot_rad)
-        sin_o_m = o_m * np.sin(rot_rad)
-        self.place_obstacle(302, ctr + (-sin_o_m, -cos_o_m), 0.19, 0.57)
-        self.place_obstacle(303, ctr + (-cos_o_m, sin_o_m), 0.19, 0.57)
-        self.place_obstacle(304, ctr + (sin_o_m, cos_o_m), 0.19, 0.57)
-        self.place_obstacle(305, ctr + (cos_o_m, -sin_o_m), 0.19, 0.57)
+        rot_rad: float = 0.35
+        o_m: float = 1.36
+        cos_o_m: float = o_m * np.cos(rot_rad)
+        sin_o_m: float = o_m * np.sin(rot_rad)
+        self.place_obstacle(302, np.add(ctr , (-sin_o_m, -cos_o_m)), 0.19, 0.57)
+        self.place_obstacle(303, np.add(ctr , (-cos_o_m, sin_o_m)), 0.19, 0.57)
+        self.place_obstacle(304, np.add(ctr , (sin_o_m, cos_o_m)), 0.19, 0.57)
+        self.place_obstacle(305, np.add(ctr , (cos_o_m, -sin_o_m)), 0.19, 0.57)
         # posts
-        p_m = 0.95
-        cos_p_m = p_m * np.cos(rot_rad)
-        sin_p_m = p_m * np.sin(rot_rad)
-        self.place_obstacle(306, ctr + (-sin_p_m, -cos_p_m), 0.19, 1.71)
-        self.place_obstacle(307, ctr + (-cos_p_m, sin_p_m), 0.19, 1.71)
-        self.place_obstacle(308, ctr + (sin_p_m, cos_p_m), 0.19, 1.71)
-        self.place_obstacle(309, ctr + (cos_p_m, -sin_p_m), 0.19, 1.71)
+        p_m: float = 0.95
+        cos_p_m: float = p_m * np.cos(rot_rad)
+        sin_p_m: float = p_m * np.sin(rot_rad)
+        self.place_obstacle(306, np.add(ctr , (-sin_p_m, -cos_p_m)), 0.19, 1.71)
+        self.place_obstacle(307, np.add(ctr , (-cos_p_m, sin_p_m)), 0.19, 1.71)
+        self.place_obstacle(308, np.add(ctr , (sin_p_m, cos_p_m)), 0.19, 1.71)
+        self.place_obstacle(309, np.add(ctr , (cos_p_m, -sin_p_m)), 0.19, 1.71)
 
 
         # blue hangar upper left
         H_R = 0.2 # post radius 20cm
         H_X = 3.07 # x dimension 3.07m
         H_Y = 2.75 # y dimension 2.75m
-        self.place_obstacle(2000, (H_R, H_R), H_R, 1.88)
-        self.place_obstacle(2001, (H_X - H_R, H_R), H_R, 1.88)
-        self.place_obstacle(2002, (H_X - H_R, H_Y - H_R), H_R, 1.88)
-        self.place_obstacle(2003, (H_R, H_Y - H_R), H_R, 1.88)
+        self.place_obstacle(2000, np.array((H_R, H_R)), H_R, 1.88)
+        self.place_obstacle(2001, np.array((H_X - H_R, H_R)), H_R, 1.88)
+        self.place_obstacle(2002, np.array((H_X - H_R, H_Y - H_R)), H_R, 1.88)
+        self.place_obstacle(2003, np.array((H_R, H_Y - H_R)), H_R, 1.88)
 
         # red hangar lower right
-        self.place_obstacle(2004, (X_MAX_M - H_R, Y_MAX_M - H_R), H_R, 1.88)
-        self.place_obstacle(2005, (X_MAX_M - H_X + H_R, Y_MAX_M - H_R), H_R, 1.88)
-        self.place_obstacle(2006, (X_MAX_M - H_X + H_R, Y_MAX_M - H_Y + H_R), H_R, 1.88)
-        self.place_obstacle(2007, (X_MAX_M - H_R, Y_MAX_M - H_Y + H_R), H_R, 1.88)
+        self.place_obstacle(2004, np.array((X_MAX_M - H_R, Y_MAX_M - H_R)), H_R, 1.88)
+        self.place_obstacle(2005, np.array((X_MAX_M - H_X + H_R, Y_MAX_M - H_R)), H_R, 1.88)
+        self.place_obstacle(2006, np.array((X_MAX_M - H_X + H_R, Y_MAX_M - H_Y + H_R)), H_R, 1.88)
+        self.place_obstacle(2007, np.array((X_MAX_M - H_R, Y_MAX_M - H_Y + H_R)), H_R, 1.88)
 
         # terminals
         # TODO: handle the front wall and roof somehow
@@ -135,10 +139,10 @@ class RobotFlockers(Model):
         i = 3000
         for p in np.linspace(T_R, T_D-T_R, 6):
             # blue terminal lower left
-            self.place_obstacle(i, (p, Y_MAX_M - T_D + p), T_R, 0.3)
+            self.place_obstacle(i, np.array((p, Y_MAX_M - T_D + p)), T_R, 0.3)
             i += 1
             # red terminal upper right
-            self.place_obstacle(i, (X_MAX_M -T_D + p, p), T_R, 0.3)
+            self.place_obstacle(i, np.array((X_MAX_M -T_D + p, p)), T_R, 0.3)
             i += 1
 
         # red robots
@@ -146,7 +150,7 @@ class RobotFlockers(Model):
             while True: # avoid overlap
                 x = self.space.x_max / 2 + 2 + self.random.random() * (self.space.x_max/2 - 3)
                 y = 1 + self.random.random() * (self.space.y_max - 2)
-                pos = np.array((x, y))
+                pos: NDArray[np.float64] = np.array((x, y))
                 if not self.is_overlapping(pos, 0.5):
                     break
             self.place_robot(i, pos, Alliance.RED)
@@ -181,7 +185,7 @@ class RobotFlockers(Model):
                     break
             self.place_cargo(i, pos, Alliance.BLUE)
 
-    def step(self):
+    def step(self) -> None:
         # move balls into terminal delays
         for item in self.space.get_neighbors((0, Y_MAX_M), 1.75, False): # blue terminal
             if isinstance(item, Cargo):
@@ -230,9 +234,9 @@ class RobotFlockers(Model):
 # ... and this matches!  yay!
 class CalRobotFlockers(RobotFlockers):
     # override
-    def make_agents(self):
+    def make_agents(self) -> None:
         # one ball with initial velocity
-        pos = np.array((1, Y_MAX_M/2))
+        pos: NDArray[np.float64] = np.array((1, Y_MAX_M/2))
         cargo = Cargo(0, self, pos, Alliance.BLUE)
         cargo.velocity = np.array((2, 0))
         self.space.place_agent(cargo, pos)
@@ -240,7 +244,7 @@ class CalRobotFlockers(RobotFlockers):
 
 class CalV(RobotFlockers):
     #override
-    def make_agents(self):
+    def make_agents(self) -> None:
         # one ball in the air, to test gravity
         pos = (1, 1)
         cargo = Cargo(0, self, pos, Alliance.BLUE)

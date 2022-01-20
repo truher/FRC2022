@@ -1,12 +1,12 @@
-from typing import Callable
-from mesa import Agent # type: ignore
+from typing import Any, Callable, Dict, List
+from mesa import Agent, Model # type: ignore
 from mesa.visualization.ModularVisualization import VisualizationElement # type: ignore
 
-class Simple3dCanvas(VisualizationElement):
+class Simple3dCanvas(VisualizationElement): # type:ignore
     local_includes = [ "frc/simple_3d_continuous_canvas.js" ]
 
     def __init__(self, # pylint: disable=super-init-not-called
-        portrayal_method: Callable[[Agent], dict],
+        portrayal_method: Callable[[Agent], Dict[Any, Any]],
         canvas_width: int,
         canvas_height: int
         ):
@@ -18,7 +18,7 @@ class Simple3dCanvas(VisualizationElement):
             "elements.push(new Simple_3d_Continuous_Module());"
         )
 
-    def render(self, model):
+    def render(self, model: Model) -> List[Any]:
         space_state = []
         for obj in model.schedule.agents:
             portrayal = self._portrayal_method(obj)

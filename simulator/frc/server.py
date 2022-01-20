@@ -1,18 +1,18 @@
-from typing import Dict
+from typing import Any, Dict
 from mesa.visualization.ModularVisualization import ModularServer # type: ignore
 from mesa.visualization.modules import TextElement # type: ignore
-from mesa import Agent # type: ignore
+from mesa import Agent, Model # type: ignore
 import numpy as np
 
-from .agents import Cargo, Robot, Obstacle # type: ignore
-from .alliance import Alliance # type: ignore
-#from .model import CalRobotFlockers, CalV, RobotFlockers # type: ignore
-from .model import RobotFlockers # type: ignore
-from .SimpleContinuousModule import SimpleCanvas # type: ignore
-from .Simple3dContinuousModule import Simple3dCanvas # type: ignore
+from .agents import Cargo, Robot, Obstacle
+from .alliance import Alliance
+#from .model import CalRobotFlockers, CalV, RobotFlockers
+from .model import RobotFlockers
+from .SimpleContinuousModule import SimpleCanvas
+from .Simple3dContinuousModule import Simple3dCanvas
 
 # renderer scale is just meters, just like the back end
-def robot_draw(agent: Agent) -> dict:
+def robot_draw(agent: Agent) -> Dict[Any, Any]:
     if isinstance(agent, Cargo):
         return {
             "Shape": "cargo",
@@ -20,6 +20,7 @@ def robot_draw(agent: Agent) -> dict:
             "z": agent.z_m
         }
     if isinstance(agent, Robot):
+        #pylint: disable=no-member
         return {
             "Shape": "robot",
             "w": 2 * agent.radius_m,
@@ -43,8 +44,8 @@ def robot_draw(agent: Agent) -> dict:
         "color": "gray"
     }
 
-class SomeText(TextElement):
-    def render(self, model):
+class SomeText(TextElement): # type:ignore
+    def render(self, model: Model) -> str:
         time = model.datacollector.model_vars['time'][-1]
         minutes = time // 60
         seconds = time % 60

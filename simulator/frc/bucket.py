@@ -4,7 +4,7 @@ import numpy as np
 
 class Bucket():
     """ A bucket is a conical frustum facing up with base centered at (0, 0, 0).  """
-    def __init__(self):
+    def __init__(self) -> None:
         self.vertex: float = -2
         self.theta_rad: float = np.pi/4
         self.height: float = 2
@@ -42,7 +42,7 @@ class Bucket():
     def angle_rad(self, p: Tuple[float, float, float]) -> float:
         d = np.subtract(p, (0, 0, self.vertex))
         dxy = np.hypot(d[0], d[1])
-        return np.arctan2(dxy, d[2])
+        return np.arctan2(dxy, d[2]) # type:ignore
 
     def closest_point(self,
         p: Tuple[float, float, float]) -> Tuple[float, float, float]:

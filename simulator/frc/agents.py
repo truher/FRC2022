@@ -1,12 +1,15 @@
+from __future__ import annotations
+from typing import Optional
 import numpy as np
-from mesa import Agent # type: ignore
-from .alliance import Alliance # type: ignore
-from .collision import collide, collide_pos, overlap # type: ignore
+from mesa import Agent # type:ignore
+from numpy.typing import NDArray
+from .alliance import Alliance
+from .collision import collide, collide_pos, overlap
 
 # TODO: do this differently
 X_MAX_M = 16.46
 Y_MAX_M = 8.23
-CENTER = np.array((X_MAX_M/2, Y_MAX_M/2))
+CENTER: NDArray[np.float64] = np.array((X_MAX_M/2, Y_MAX_M/2))
 
 
 # height (energy) recovered is ~0.75 so velocity is ~0.85.
@@ -24,7 +27,7 @@ GRAVITY_M_S_S = 9.8
 # https://archive.thepocketlab.com/educators/lesson/rolling-resistance-physics-lab
 ROLLING_FRICTION_COEFFICIENT = 0.0135
 
-class Thing(Agent):
+class Thing(Agent): # type:ignore
     def __init__(self, unique_id: int, model: 'Model', # type: ignore
         pos, elasticity
     ) -> None:
@@ -33,15 +36,15 @@ class Thing(Agent):
         self.radius_m: float = 0
         self.mass_kg: float = 0
         self.elasticity = elasticity
-        self.velocity = np.zeros(2)
+        self.velocity: NDArray[np.float64] = np.zeros(2)
         self.z_m: float = 0
         self.vz_m_s: float = 0
 
     @property
-    def speed(self):
+    def speed(self) -> np.float64:
         return np.linalg.norm(self.velocity)
 
-    def update_pos_for_velocity(self, size_x, size_y):
+    def update_pos_for_velocity(self, size_x: float, size_y: float) -> None:
         if self.pos is None:
             # we're in some delay somewhere
             return
@@ -62,10 +65,10 @@ class Thing(Agent):
             self.vz_m_s = -self.vz_m_s * VERTICAL_ELASTICITY
             self.z_m = 0
 
-    def is_colliding(self, other):
+    def is_colliding(self, other: Thing) -> bool:
         return overlap(other.pos, self.pos, other.radius_m, self.radius_m)
 
-    def check_wall_collision(self, size_x, size_y):
+    def check_wall_collision(self, size_x: float, size_y: float) -> None:
         out = False
         if self.pos[0] <= self.radius_m:
             # blue wall 197cm high
@@ -101,7 +104,7 @@ class Thing(Agent):
             self.z_m = 0
             self.vz_m_s = -self.vz_m_s * VERTICAL_ELASTICITY
 
-    def check_ball_collision(self, other) -> bool: # if actually colliding
+    def check_ball_collision(self, other: Thing) -> bool: # if actually colliding
         if isinstance(self, Obstacle) and isinstance(other, Obstacle):
             return False
         if not self.is_colliding(other):
@@ -132,7 +135,7 @@ class Obstacle(Thing):
         self.z_height_m = z_height_m
         self.z_altitude_m = 0 # off the floor
 
-    def step(self): # override: never moves, so just check collisions
+    def step(self) -> None: # override: never moves, so just check collisions
         for other in self.model.space.get_neighbors(self.pos, 4, False): # 2m neighborhood
             if self.unique_id >= other.unique_id:
                 continue
@@ -149,7 +152,7 @@ class Cargo(Thing):
         self.radius_m = 0.12
         self.mass_kg = 0.27
 
-    def update_velocity_for_rolling_friction(self):
+    def update_velocity_for_rolling_friction(self) -> None:
         # balls in the air aren't affected by rolling friction
         if self.z_m > 0.01:
             return
@@ -163,10 +166,10 @@ class Cargo(Thing):
             self.velocity = np.multiply(self.velocity, 1-v_ratio)
 
     # TODO: also air resistance
-    def update_v_z_for_gravity(self):
+    def update_v_z_for_gravity(self) -> None:
         self.vz_m_s -= GRAVITY_M_S_S * self.model.seconds_per_step
 
-    def step(self):
+    def step(self) -> None:
         collided = False # don't try to apply any other forces in collisions
         for other in self.model.space.get_neighbors(self.pos, 2, False): # 2m neighborhood
             if self.unique_id >= other.unique_id:
@@ -187,13 +190,13 @@ class Robot(Thing):
     ):
         super().__init__(unique_id, model, pos, 0.1)
         # seems like robot collisions are *really* inelastic
-        self.radius_m = 0.50
-        self.mass_kg = 56 # max allowed
+        self.radius_m: float = 0.50
+        self.mass_kg: float = 56 # max allowed
         self.alliance: Alliance = alliance
-        self.slot1 = None # TODO: just make this a list
-        self.slot2 = None
+        self.slot1: Optional[Cargo] = None # TODO: just make this a list
+        self.slot2: Optional[Cargo] = None
 
-    def step(self):
+    def step(self) -> None:
         # pick up nearby balls TODO: make this a process that takes time
         for item in self.model.space.get_neighbors(self.pos, 0.75, False):
             if isinstance(item, Cargo):
