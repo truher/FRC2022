@@ -1,13 +1,14 @@
-from mesa.visualization.ModularVisualization import ModularServer
-from mesa.visualization.modules import BarChartModule, ChartModule, TextElement
-from mesa import Agent
+from mesa.visualization.ModularVisualization import ModularServer # type: ignore
+from mesa.visualization.modules import BarChartModule, ChartModule, TextElement # type: ignore
+from mesa import Agent # type: ignore
 import numpy as np
+from typing import Dict
 
-from .agents import Cargo, Robot, Obstacle
-from .alliance import Alliance
-from .model import CalRobotFlockers, CalV, RobotFlockers
-from .SimpleContinuousModule import SimpleCanvas
-from .Simple3dContinuousModule import Simple3dCanvas
+from .agents import Cargo, Robot, Obstacle # type: ignore
+from .alliance import Alliance # type: ignore
+from .model import CalRobotFlockers, CalV, RobotFlockers # type: ignore
+from .SimpleContinuousModule import SimpleCanvas # type: ignore
+from .Simple3dContinuousModule import Simple3dCanvas # type: ignore
 
 # renderer scale is just meters, just like the back end
 def robot_draw(agent: Agent) -> dict:
@@ -84,7 +85,7 @@ robot_canvas_2 = Simple3dCanvas(robot_draw, 1646, 823)
 #)
 text_element = SomeText()
 # ctor variable names
-model_params = {
+model_params: Dict[str, float] = {
 }
 
 server = ModularServer(

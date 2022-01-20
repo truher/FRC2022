@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from .collision import collide, overlap
+from .collision import collide, overlap # type: ignore
 
 class Ball:
     def __init__(self, x, y, r, vx, vy, e: float) -> None:
@@ -8,7 +8,7 @@ class Ball:
         self.__radius = r
         self.__velocity = np.array((vx, vy))
         self.__elasticity = e
-        self.__in_collision = []
+        self.__in_collision = [] # type: ignore
 
     @property
     def mass(self):

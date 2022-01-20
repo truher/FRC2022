@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Tuple
 import unittest
 from frc.bucket import Bucket
 from frc.delay import Delay
@@ -24,7 +25,7 @@ class TestDelay(unittest.TestCase):
 class TestBucket(unittest.TestCase):
     def test_bucket_internals(self) -> None:
         x = Bucket()
-        p = (0, 0, 0) # base center
+        p: Tuple[float, float, float] = (0, 0, 0) # base center
         self.assertAlmostEqual(0, x.angle_rad(p))
         self.assertTrue(x.is_inside_cone(p))
         self.assertTrue(x.is_below_top(p))

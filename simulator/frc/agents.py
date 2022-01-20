@@ -1,7 +1,7 @@
 import numpy as np
-from mesa import Agent
-from .alliance import Alliance
-from .collision import collide, collide_pos, overlap
+from mesa import Agent # type: ignore
+from .alliance import Alliance # type: ignore
+from .collision import collide, collide_pos, overlap # type: ignore
 
 # TODO: do this differently
 X_MAX_M = 16.46
@@ -25,7 +25,7 @@ GRAVITY_M_S_S = 9.8
 ROLLING_FRICTION_COEFFICIENT = 0.0135
 
 class Thing(Agent):
-    def __init__(self, unique_id: int, model: 'Model',
+    def __init__(self, unique_id: int, model: 'Model', # type: ignore
         pos, elasticity
     ) -> None:
         super().__init__(unique_id, model)
@@ -120,7 +120,7 @@ class Thing(Agent):
 # TODO: lower height too, for upper hub
 class Obstacle(Thing):
     """ has infinite mass """
-    def __init__(self, unique_id: int, model: 'Model', pos,
+    def __init__(self, unique_id: int, model: 'Model', pos, # type: ignore
         radius_m: float, z_height_m: float
     ) -> None:
         super().__init__(unique_id, model, pos, 1.0)
@@ -138,7 +138,7 @@ class Obstacle(Thing):
             self.check_ball_collision(other)
 
 class Cargo(Thing):
-    def __init__(self, unique_id: int, model: 'Model',
+    def __init__(self, unique_id: int, model: 'Model', # type: ignore
         pos,
         alliance: Alliance,
     ) -> None:
@@ -180,7 +180,7 @@ class Cargo(Thing):
         self.update_pos_for_velocity(self.model.space.width, self.model.space.height)
 
 class Robot(Thing):
-    def __init__(self, unique_id: int, model: 'Model',
+    def __init__(self, unique_id: int, model: 'Model', # type: ignore
         pos,
         alliance: Alliance,
     ):

@@ -1,5 +1,5 @@
-from mesa import Agent
-from mesa.visualization.ModularVisualization import VisualizationElement
+from mesa import Agent # type: ignore
+from mesa.visualization.ModularVisualization import VisualizationElement # type: ignore
 from typing import Callable
 
 class SimpleCanvas(VisualizationElement):

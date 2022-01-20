@@ -1,8 +1,8 @@
-from .ball import Ball
+from .ball import Ball # type: ignore
 
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+import matplotlib as mpl # type: ignore
+import matplotlib.pyplot as plt # type: ignore
+import matplotlib.animation as animation # type: ignore
 from random import random, uniform, choice
 
 mpl.use('TkAgg')
