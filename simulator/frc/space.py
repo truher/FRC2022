@@ -3,17 +3,18 @@ import numpy as np
 from typing import (
     Any,
     Dict,
-    Iterable,
-    Iterator,
+#    Iterable,
+#    Iterator,
     List,
     Optional,
     Set,
-    Sequence,
+#    Sequence,
     Tuple,
     Union,
-    cast,
-    overload,
+#    cast,
+#    overload,
 )
+from numpy.typing import NDArray
 from mesa.agent import Agent # type:ignore
 
 GridContent = Union[Optional[Agent], Set[Agent]]
@@ -53,11 +54,11 @@ class ContinuousSpace:
         self.y_min = y_min
         self.y_max = y_max
         self.height = y_max - y_min
-        self.center = np.array(((x_max + x_min) / 2, (y_max + y_min) / 2))
-        self.size = np.array((self.width, self.height))
+        self.center: NDArray[np.float64] = np.array(((x_max + x_min) / 2, (y_max + y_min) / 2))
+        self.size: NDArray[np.float64] = np.array((self.width, self.height))
         self.torus = torus
 
-        self._agent_points = None
+        self._agent_points: Optional[NDArray[np.float64]] = None
         self._index_to_agent: Dict[int, Agent] = {}
         self._agent_to_index: Dict[Agent, int] = {}
 
@@ -143,8 +144,8 @@ class ContinuousSpace:
         Args:
             pos_1, pos_2: Coordinate tuples for both points.
         """
-        one = np.array(pos_1)
-        two = np.array(pos_2)
+        one: NDArray[np.float64] = np.array(pos_1)
+        two: NDArray[np.float64] = np.array(pos_2)
         if self.torus:
             one = (one - self.center) % self.size
             two = (two - self.center) % self.size
