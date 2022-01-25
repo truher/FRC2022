@@ -24,7 +24,7 @@ class TestDelay(unittest.TestCase):
 
 class TestBucket(unittest.TestCase):
     def test_bucket_internals(self) -> None:
-        x = Bucket()
+        x = Bucket(-2, np.pi/4, 2)
         p: Tuple[float, float, float] = (0, 0, 0) # base center
         self.assertAlmostEqual(0, x.angle_rad(p))
         self.assertTrue(x.is_inside_cone(p))
@@ -83,6 +83,17 @@ class TestBucket(unittest.TestCase):
             x.closest_point((0, 0, 1))
         x = Bucket.make_bucket(1, 2, 2)
         np.testing.assert_almost_equal((2,0,2), x.closest_point((1, 0, 2.5)))
+
+    def test_unit_normal(self) -> None:
+        x = Bucket.make_bucket(1, 2, 1)
+        self.assertAlmostEqual(45, np.degrees(x.theta_rad))
+        np.testing.assert_almost_equal((-0.5, -0.5, np.sqrt(0.5)), x.unit_normal((1, 1, 1)))
+        np.testing.assert_almost_equal((-np.sqrt(0.5), 0, np.sqrt(0.5)), x.unit_normal((1, 0, 1)))
+        self.assertAlmostEqual(np.sqrt(2)/2, x.distance((1, 0, 1)))
+        self.assertAlmostEqual(-np.sqrt(2)/2, x.distance((2, 0, 0))) # below = negative
+        self.assertAlmostEqual(np.sqrt(2), x.distance((1, 0, 2)))
+        np.testing.assert_almost_equal((1.5, 0.0, 0.5), x.closest_point2((1, 0, 1))) # above
+        np.testing.assert_almost_equal((1.5, 0.0, 0.5), x.closest_point2((2, 0, 0))) # below
 
 if __name__ == '__main__':
     unittest.main()

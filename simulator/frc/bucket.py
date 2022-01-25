@@ -4,10 +4,22 @@ import numpy as np
 
 class Bucket():
     """ A bucket is a conical frustum facing up with base centered at (0, 0, 0).  """
-    def __init__(self) -> None:
-        self.vertex: float = -2
-        self.theta_rad: float = np.pi/4
-        self.height: float = 2
+    def __init__(self, vertex, theta_rad, height) -> None:
+        self._vertex: float = vertex
+        self._theta_rad: float = theta_rad
+        self._height: float = height
+        self._n_z = np.sin(self._theta_rad) # unit normal z
+        self._n_xy = - np.cos(self._theta_rad) # unit normal in xy plane
+
+    @property
+    def vertex(self) -> float:
+        return self._vertex
+    @property
+    def theta_rad(self) -> float:
+        return self._theta_rad
+    @property
+    def height(self) -> float:
+        return self._height
 
     @staticmethod
     def make_bucket(
@@ -17,12 +29,19 @@ class Bucket():
             raise ValueError("positive arguments man")
         if dr <= 0:
             raise ValueError("top must be bigger than bottom")
-        b = Bucket()
-        b.theta_rad = np.arctan2(dr, height)
-        b.height = height
-        b.vertex = - r_base / np.tan(b.theta_rad)
-        return b
+        return Bucket(
+            - r_base * height / dr,
+            np.arctan2(dr, height),
+            height)
 
+    def unit_normal(self, p: Tuple[float, float, float]) -> Tuple[float, float, float]:
+        xy = np.sqrt(p[0] * p[0] + p[1] * p[1])
+        A = self._n_xy / xy
+        return (A*p[0], A*p[1], self._n_z)
+
+    def distance(self, p: Tuple[float, float, float]) -> float:
+        p_from_vertex = (p[0], p[1], p[2] - self.vertex)
+        return np.dot(p_from_vertex, self.unit_normal(p))
 
     def is_inside(self, p: Tuple[float, float, float]) -> bool:
         return (
@@ -44,8 +63,23 @@ class Bucket():
         dxy = np.hypot(d[0], d[1])
         return np.arctan2(dxy, d[2]) # type:ignore
 
+    # use projection
+    def closest_point2(self,
+        p: Tuple[float, float, float]
+    ) -> Tuple[float, float, float]:
+        p_from_vertex: Tuple[float, float, float] = (p[0], p[1], p[2] - self.vertex)
+        n: Tuple[float, float, float] = self.unit_normal(p)
+        d: float = (p_from_vertex[0] * n[0]
+                  + p_from_vertex[1] * n[1]
+                  + p_from_vertex[2] * n[2])
+        d_vec: Tuple[float, float, float] = (d*n[0], d*n[1], d*n[2])
+        return (p[0] - d_vec[0],
+                p[1] - d_vec[1],
+                p[2] - d_vec[2])
+
     def closest_point(self,
-        p: Tuple[float, float, float]) -> Tuple[float, float, float]:
+        p: Tuple[float, float, float]
+    ) -> Tuple[float, float, float]:
         epsilon = 0.001
         x = p[0]
         y = p[1]
