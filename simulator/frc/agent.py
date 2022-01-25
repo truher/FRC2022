@@ -1,15 +1,18 @@
 from __future__ import annotations
-from typing import Optional
+from typing import List, Optional, Tuple
 import numpy as np
 from mesa import Agent # type:ignore
-from numpy.typing import NDArray
+#from numpy.typing import NDArray
 from .alliance import Alliance
 from .collision import collide, collide_pos, overlap
+
+R3 = Tuple[float, float, float]
+RN = List[float] # fix this with pep646 when 3.11 comes out
 
 # TODO: do this differently
 X_MAX_M = 16.46
 Y_MAX_M = 8.23
-CENTER: NDArray[np.float64] = np.array((X_MAX_M/2, Y_MAX_M/2))
+CENTER: R3 = (X_MAX_M/2, Y_MAX_M/2, 0)
 
 
 # height (energy) recovered is ~0.75 so velocity is ~0.85.
@@ -29,35 +32,78 @@ ROLLING_FRICTION_COEFFICIENT = 0.0135
 
 class Thing(Agent): # type:ignore
     def __init__(self, unique_id: int, model: 'Model', # type: ignore
-        pos, elasticity
+        pos: R3, elasticity: float
     ) -> None:
         super().__init__(unique_id, model)
-        self.pos = pos # TODO: remove this, place_agent does it.
+        # TODO: remove pos, place_agent does it.
+        self._pos: RN = [0, 0, 0] # mutable
+        self._pos[0] = pos[0]
+        self._pos[1] = pos[1]
+        self._pos[2] = pos[2]
         self.radius_m: float = 0
         self.mass_kg: float = 0
         self.elasticity = elasticity
-        self.velocity: NDArray[np.float64] = np.zeros(2)
+        self._velocity: RN = [0, 0, 0] # mutable
         self.z_m: float = 0
         self.vz_m_s: float = 0
+
+    @property
+    def pos(self) -> R3:
+        if self._pos is None:
+            return None
+        return (self._pos[0], self._pos[1], self._pos[2])
+
+    @pos.setter
+    def pos(self, value: R3) -> None:
+        if value is None:
+            self._pos = None
+            return
+        if self._pos is None:
+            self._pos = [0, 0, 0]
+        self._pos[0] = value[0]
+        self._pos[1] = value[1]
+        self._pos[2] = value[2]
+
+    @property
+    def velocity(self) -> R3:
+        if self._velocity is None:
+            return None
+        return (self._velocity[0], self._velocity[1], self._velocity[2])
+
+    @velocity.setter
+    def velocity(self, value: R3) -> None:
+        if value is None:
+            self._velocity = None
+            return
+        if self._velocity is None:
+            self._velocity = [0, 0, 0]
+        self._velocity[0] = value[0]
+        self._velocity[1] = value[1]
+        self._velocity[2] = value[2]
 
     @property
     def speed(self) -> np.float64:
         return np.linalg.norm(self.velocity)
 
     def update_pos_for_velocity(self, size_x: float, size_y: float) -> None:
-        if self.pos is None:
+        if self._pos is None:
             # we're in some delay somewhere
             return
-        self.pos += self.velocity * self.model.seconds_per_step
-        if self.pos[0] <= self.radius_m:
-            self.pos[0] = self.radius_m
-        elif self.pos[0] >= (x2_bound := (size_x - self.radius_m)):
-            self.pos[0] = x2_bound
-        if self.pos[1] <= self.radius_m:
-            self.pos[1] = self.radius_m
-        elif self.pos[1] >= (y2_bound := (size_y - self.radius_m)):
-            self.pos[1] = y2_bound
-        self.model.space.move_agent(self, self.pos)
+        dv0 = self._velocity[0] * self.model.seconds_per_step
+        dv1 = self._velocity[1] * self.model.seconds_per_step
+        dv2 = self._velocity[2] * self.model.seconds_per_step
+        self._pos[0] += dv0
+        self._pos[1] += dv1
+        self._pos[2] += dv2
+        if self._pos[0] <= self.radius_m:
+            self._pos[0] = self.radius_m
+        elif self._pos[0] >= (x2_bound := (size_x - self.radius_m)):
+            self._pos[0] = x2_bound
+        if self._pos[1] <= self.radius_m:
+            self._pos[1] = self.radius_m
+        elif self._pos[1] >= (y2_bound := (size_y - self.radius_m)):
+            self._pos[1] = y2_bound
+        self.model.space.move_agent(self, self._pos)
         # update z
         self.z_m += self.vz_m_s * self.model.seconds_per_step
         # don't go through the floor
@@ -70,30 +116,30 @@ class Thing(Agent): # type:ignore
 
     def check_wall_collision(self, size_x: float, size_y: float) -> None:
         out = False
-        if self.pos[0] <= self.radius_m:
+        if self._pos[0] <= self.radius_m:
             # blue wall 197cm high
             if self.z_m > END_WALL_HEIGHT_M:
                 out = True
-            self.pos[0] = self.radius_m
-            self.velocity[0] = -self.velocity[0] * self.elasticity
-        elif self.pos[0] >= (x2_bound := (size_x - self.radius_m)):
+            self._pos[0] = self.radius_m
+            self._velocity[0] = -self._velocity[0] * self.elasticity
+        elif self._pos[0] >= (x2_bound := (size_x - self.radius_m)):
             # red wall 197cm high
             if self.z_m > END_WALL_HEIGHT_M:
                 out = True
-            self.pos[0] = x2_bound
-            self.velocity[0] = -self.velocity[0] * self.elasticity
-        if self.pos[1] <= self.radius_m:
+            self._pos[0] = x2_bound
+            self._velocity[0] = -self._velocity[0] * self.elasticity
+        if self._pos[1] <= self.radius_m:
             # side wall 51cm high
             if self.z_m > SIDE_WALL_HEIGHT_M:
                 out = True
-            self.pos[1] = self.radius_m
-            self.velocity[1] = -self.velocity[1] * self.elasticity
-        elif self.pos[1] >= (y2_bound := (size_y - self.radius_m)):
+            self._pos[1] = self.radius_m
+            self._velocity[1] = -self._velocity[1] * self.elasticity
+        elif self._pos[1] >= (y2_bound := (size_y - self.radius_m)):
             # side wall 51cm high
             if self.z_m > SIDE_WALL_HEIGHT_M:
                 out = True
-            self.pos[1] = y2_bound
-            self.velocity[1] = -self.velocity[1] * self.elasticity
+            self._pos[1] = y2_bound
+            self._velocity[1] = -self._velocity[1] * self.elasticity
         if out:
             self.model.space.remove_agent(self)
             self.model.schedule.remove(self)
@@ -113,22 +159,26 @@ class Thing(Agent): # type:ignore
         # TODO: handle the hub case separately
         if self.z_m > 1.32 or other.z_m > 1.32:
             return False
-        self.velocity, other.velocity = collide(
+        selfv, otherv = collide(
             self.pos, self.velocity, self.mass_kg, self.elasticity,
             other.pos, other.velocity, other.mass_kg, other.elasticity)
-        self.pos, other.pos = collide_pos(
+        self.velocity = selfv
+        other.velocity = otherv
+        selfp, otherp = collide_pos(
             self.pos, self.mass_kg, self.radius_m,
             other.pos, other.mass_kg, other.radius_m)
+        self.pos = selfp
+        other.pos = otherp
         return True
 
 # TODO: lower height too, for upper hub
 class Obstacle(Thing):
     """ has infinite mass """
-    def __init__(self, unique_id: int, model: 'Model', pos, # type: ignore
-        radius_m: float, z_height_m: float
+    def __init__(self, unique_id: int, model: 'Model', # type: ignore
+        pos: R3, radius_m: float, z_height_m: float
     ) -> None:
         super().__init__(unique_id, model, pos, 1.0)
-        self.pos = np.array(pos)
+        #self.pos = pos
         #self.radius_m = 0.045 # terminal posts are  ~4.5cm wide
         self.radius_m = radius_m
         self.mass_kg = np.inf
@@ -143,8 +193,7 @@ class Obstacle(Thing):
 
 class Cargo(Thing):
     def __init__(self, unique_id: int, model: 'Model', # type: ignore
-        pos,
-        alliance: Alliance,
+        pos: R3, alliance: Alliance,
     ) -> None:
         super().__init__(unique_id, model, pos, 0.5) # elasticity 0.5
         # i measured elasticity of 0.5 for rolling collisions, using video
@@ -160,7 +209,7 @@ class Cargo(Thing):
         dv = accel * self.model.seconds_per_step # delta v during this step
         v_scalar = np.linalg.norm(self.velocity)
         if dv > v_scalar:
-            self.velocity = np.zeros(2)
+            self.velocity = (0, 0, 0)
         else:
             v_ratio = dv / v_scalar
             self.velocity = np.multiply(self.velocity, 1-v_ratio)
@@ -185,8 +234,7 @@ class Cargo(Thing):
 
 class Robot(Thing):
     def __init__(self, unique_id: int, model: 'Model', # type: ignore
-        pos,
-        alliance: Alliance,
+        pos: R3, alliance: Alliance,
     ):
         super().__init__(unique_id, model, pos, 0.1)
         # seems like robot collisions are *really* inelastic
@@ -246,6 +294,8 @@ class Robot(Thing):
             if self.check_ball_collision(other):
                 collided = True
         if not collided:
-            self.velocity += np.random.normal(loc=0.00, scale=0.05, size=2)
+            v = np.random.normal(loc=0.00, scale=0.05, size=2)
+            self._velocity[0] += v[0]
+            self._velocity[1] += v[1]
         self.check_wall_collision(self.model.space.width, self.model.space.height)
         self.update_pos_for_velocity(self.model.space.width, self.model.space.height)

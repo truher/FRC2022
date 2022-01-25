@@ -4,26 +4,26 @@ from numpy.typing import NDArray
 from mesa.agent import Agent # type:ignore
 
 GridContent = Union[Optional[Agent], Set[Agent]]
-# used in ContinuousSpace
-FloatCoordinate = Union[Tuple[float, float], np.ndarray]
+# used in Continuous3dSpace
+FloatCoordinate = Union[Tuple[float, float, float], np.ndarray]
 
-class ContinuousSpace:
+class Continuous3dSpace:
     """Continuous space where each agent can have an arbitrary position.
 
     Assumes that all agents are point objects, and have a pos property storing
-    their position as an (x, y) tuple. This class uses a numpy array internally
+    their position as an (x, y, z) tuple. This class uses a numpy array internally
     to store agent objects, to speed up neighborhood lookups.
+
+    The 3d version is similar to the 2d one but backwards compatible.
     """
 
     _grid = None
 
     def __init__(
         self,
-        x_max: float,
-        y_max: float,
+        p_max: Tuple[float, float, float],
         torus: bool,
-        x_min: float = 0,
-        y_min: float = 0,
+        p_min: Tuple[float, float, float] = (0, 0, 0)
     ) -> None:
         """Create a new continuous space.
 
@@ -34,14 +34,17 @@ class ContinuousSpace:
                           coordinates for the space. Below them, values loop to
                           the other edge (if torus=True) or raise an exception.
         """
-        self.x_min = x_min
-        self.x_max = x_max
-        self.width = x_max - x_min
-        self.y_min = y_min
-        self.y_max = y_max
-        self.height = y_max - y_min
-        self.center: NDArray[np.float64] = np.array(((x_max + x_min) / 2, (y_max + y_min) / 2))
-        self.size: NDArray[np.float64] = np.array((self.width, self.height))
+        self.p_min = p_min
+        self.p_max = p_max
+        self.width = p_max[0] - p_min[0]
+        self.height = p_max[1] - p_min[1]
+        self.depth = p_max[2] - p_min[2]
+        self.center: NDArray[np.float64] = np.array(((p_max[0] + p_min[0]) / 2,
+                                                     (p_max[1] + p_min[1]) / 2,
+                                                     (p_max[2] + p_min[2]) / 2))
+        self.size: NDArray[np.float64] = np.array((self.width,
+                                                   self.height,
+                                                   self.depth))
         self.torus = torus
 
         self._agent_points: Optional[NDArray[np.float64]] = None
@@ -134,11 +137,13 @@ class ContinuousSpace:
         one: NDArray[np.float64] = np.array(pos_1)
         two: NDArray[np.float64] = np.array(pos_2)
         if self.torus:
-            one = (one - self.center) % self.size
-            two = (two - self.center) % self.size
+            with np.errstate(invalid='ignore'):
+                # nan_to_num fixes zero size dimensions (e.g. flatland)
+                one = np.nan_to_num((one - self.center) % self.size)
+                two = np.nan_to_num((two - self.center) % self.size)
         heading: NDArray[np.float64] = two - one
         if isinstance(pos_1, tuple):
-            return (heading[0], heading[1])
+            return (heading[0], heading[1], heading[2])
         return heading
 
     def get_distance(self, pos_1: FloatCoordinate, pos_2: FloatCoordinate) -> float:
@@ -147,15 +152,17 @@ class ContinuousSpace:
         Args:
             pos_1, pos_2: Coordinate tuples for both points.
         """
-        x1, y1 = pos_1
-        x2, y2 = pos_2
+        x1, y1, z1 = pos_1
+        x2, y2, z2 = pos_2
 
         dx = np.abs(x1 - x2)
         dy = np.abs(y1 - y2)
+        dz = np.abs(z1 - z2)
         if self.torus:
             dx = min(dx, self.width - dx)
             dy = min(dy, self.height - dy)
-        return float(np.sqrt(dx * dx + dy * dy))
+            dz = min(dz, self.depth - dz)
+        return float(np.sqrt(dx * dx + dy * dy + dz * dz))
 
     def torus_adj(self, pos: FloatCoordinate) -> FloatCoordinate:
         """Adjust coordinates to handle torus looping.
@@ -171,13 +178,29 @@ class ContinuousSpace:
             return pos
         if not self.torus:
             raise Exception("Point out of bounds, and space non-toroidal.")
-        x = self.x_min + ((pos[0] - self.x_min) % self.width)
-        y = self.y_min + ((pos[1] - self.y_min) % self.height)
+        x = self.p_min[0] + ((pos[0] - self.p_min[0]) % self.width)
+        y = self.p_min[1] + ((pos[1] - self.p_min[1]) % self.height)
+        z = (0 if self.depth == 0
+             else self.p_min[2] + ((pos[2] - self.p_min[2]) % self.depth))
         if isinstance(pos, tuple):
-            return (x, y)
-        return np.array((x, y))
+            return (x, y, z)
+        return np.array((x, y, z))
 
     def out_of_bounds(self, pos: FloatCoordinate) -> bool:
         """Check if a point is out of bounds."""
-        x, y = pos
-        return x < self.x_min or x >= self.x_max or y < self.y_min or y >= self.y_max
+        # pylint: disable=too-many-return-statements
+        x, y, z = pos
+        # deals with zero-size dimensions
+        if x < self.p_min[0] or x > self.p_max[0]:
+            return True
+        if self.width > 0 and x == self.p_max[0]:
+            return True
+        if y < self.p_min[1] or y > self.p_max[1]:
+            return True
+        if self.height > 0 and y == self.p_max[1]:
+            return True
+        if z < self.p_min[2] or z > self.p_max[2]:
+            return True
+        if self.depth > 0 and z == self.p_max[2]:
+            return True
+        return False

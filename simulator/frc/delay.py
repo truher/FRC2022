@@ -1,7 +1,9 @@
 from collections import deque
-from typing import Any, Deque, Tuple
+from typing import Deque, Generic, Optional, Tuple, TypeVar
 
-class Delay():
+T = TypeVar('T')
+
+class Delay(Generic[T]):
     def __init__(self, latency: float, throughput:float) -> None:
         """
             latency: items remain this long
@@ -11,19 +13,19 @@ class Delay():
         self.min_get_period: float = 1/throughput
         self.latest_put_time: float = 0
         self.latest_get_time: float = 0
-        self.deque: Deque[Tuple[Any, float]] = deque()
+        self.deque: Deque[Tuple[T, float]] = deque()
 
     @property
     def length(self) -> int:
         return len(self.deque)
 
-    def put(self, item: Any, item_time: float) -> None:
+    def put(self, item: T, item_time: float) -> None:
         if item_time < self.latest_put_time: # inserts must be in time order
             raise ValueError(f"item_time {item_time} < latest put_time {self.latest_put_time}")
         self.latest_put_time = item_time
         self.deque.append((item, item_time))
 
-    def get(self, as_of: float) -> Any:
+    def get(self, as_of: float) -> Optional[T]:
         if len(self.deque) == 0:
             return None
         dt = as_of - self.latest_get_time

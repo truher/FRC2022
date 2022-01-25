@@ -5,18 +5,18 @@ import random
 import numpy as np
 #import pytest
 
-from frc.space import ContinuousSpace # pylint: disable=import-error
+from frc.space import Continuous3dSpace # pylint: disable=import-error
 
-TEST_AGENTS = [(-20, -20), (-20, -20.05), (65, 18)]
-OUTSIDE_POSITIONS = [(70, 10), (30, 20), (100, 10)]
+TEST_AGENTS = [(-20, -20, 0), (-20, -20.05, 0), (65, 18, 0)]
+OUTSIDE_POSITIONS = [(70, 10, 0), (30, 20, 0), (100, 10, 0)]
 REMOVAL_TEST_AGENTS = [
-    (-20, -20),
-    (-20, -20.05),
-    (65, 18),
-    (0, -11),
-    (20, 20),
-    (31, 41),
-    (55, 32),
+    (-20, -20, 0),
+    (-20, -20.05, 0),
+    (65, 18, 0),
+    (0, -11, 0),
+    (20, 20, 0),
+    (31, 41, 0),
+    (55, 32, 0),
 ]
 
 class MockAgent:
@@ -38,7 +38,7 @@ class TestSpaceToroidal(unittest.TestCase):
         """
         Create a test space and populate with Mock Agents.
         """
-        self.space = ContinuousSpace(70, 20, True, -30, -30)
+        self.space = Continuous3dSpace((70, 20, 0), True, (-30, -30, 0))
         self.agents = []
         for i, pos in enumerate(TEST_AGENTS):
             a = MockAgent(i, None)
@@ -66,41 +66,41 @@ class TestSpaceToroidal(unittest.TestCase):
         """
         Test toroidal distance calculations.
         """
-        pos_1 = (-30, -30)
-        pos_2 = (70, 20)
+        pos_1 = (-30, -30, 0)
+        pos_2 = (70, 20, 0)
         assert self.space.get_distance(pos_1, pos_2) == 0
 
-        pos_3 = (-30, -20)
+        pos_3 = (-30, -20, 0)
         assert self.space.get_distance(pos_1, pos_3) == 10
 
-        pos_4 = (20, -5)
-        pos_5 = (20, -15)
+        pos_4 = (20, -5, 0)
+        pos_5 = (20, -15, 0)
         assert self.space.get_distance(pos_4, pos_5) == 10
 
-        pos_6 = (-30, -29)
-        pos_7 = (21, -5)
+        pos_6 = (-30, -29, 0)
+        pos_7 = (21, -5, 0)
         assert self.space.get_distance(pos_6, pos_7) == np.sqrt(49 ** 2 + 24 ** 2)
 
     def test_heading(self) -> None:
-        pos_1 = (-30, -30)
-        pos_2 = (70, 20)
-        self.assertEqual((0, 0), self.space.get_heading(pos_1, pos_2))
+        pos_1 = (-30, -30, 0)
+        pos_2 = (70, 20, 0)
+        self.assertEqual((0, 0, 0), self.space.get_heading(pos_1, pos_2))
 
-        pos_1 = (65, -25)
-        pos_2 = (-25, -25)
-        self.assertEqual((10, 0), self.space.get_heading(pos_1, pos_2))
+        pos_1 = (65, -25, 0)
+        pos_2 = (-25, -25, 0)
+        self.assertEqual((10, 0, 0), self.space.get_heading(pos_1, pos_2))
 
     def test_neighborhood_retrieval(self) -> None:
         """
         Test neighborhood retrieval
         """
-        neighbors_1 = self.space.get_neighbors((-20, -20), 1)
+        neighbors_1 = self.space.get_neighbors((-20, -20, 0), 1)
         assert len(neighbors_1) == 2
 
-        neighbors_2 = self.space.get_neighbors((40, -10), 10)
+        neighbors_2 = self.space.get_neighbors((40, -10, 0), 10)
         assert len(neighbors_2) == 0
 
-        neighbors_3 = self.space.get_neighbors((-30, -30), 10)
+        neighbors_3 = self.space.get_neighbors((-30, -30, 0), 10)
         assert len(neighbors_3) == 1
 
     def test_bounds(self) -> None:
@@ -132,7 +132,7 @@ class TestSpaceNonToroidal(unittest.TestCase):
         """
         Create a test space and populate with Mock Agents.
         """
-        self.space = ContinuousSpace(70, 20, False, -30, -30)
+        self.space = Continuous3dSpace((70, 20, 0), False, (-30, -30, 0))
         self.agents = []
         for i, pos in enumerate(TEST_AGENTS):
             a = MockAgent(i, None)
@@ -161,30 +161,30 @@ class TestSpaceNonToroidal(unittest.TestCase):
         Test toroidal distance calculations.
         """
 
-        pos_2 = (70, 20)
-        pos_3 = (-30, -20)
+        pos_2 = (70, 20, 0)
+        pos_3 = (-30, -20, 0)
         assert self.space.get_distance(pos_2, pos_3) == 107.70329614269008
 
     def test_heading(self) -> None:
-        pos_1 = (-30, -30)
-        pos_2 = (70, 20)
-        self.assertEqual((100, 50), self.space.get_heading(pos_1, pos_2))
+        pos_1 = (-30, -30, 0)
+        pos_2 = (70, 20, 0)
+        self.assertEqual((100, 50, 0), self.space.get_heading(pos_1, pos_2))
 
-        pos_1 = (65, -25)
-        pos_2 = (-25, -25)
-        self.assertEqual((-90, 0), self.space.get_heading(pos_1, pos_2))
+        pos_1 = (65, -25, 0)
+        pos_2 = (-25, -25, 0)
+        self.assertEqual((-90, 0, 0), self.space.get_heading(pos_1, pos_2))
 
     def test_neighborhood_retrieval(self) -> None:
         """
         Test neighborhood retrieval
         """
-        neighbors_1 = self.space.get_neighbors((-20, -20), 1)
+        neighbors_1 = self.space.get_neighbors((-20, -20, 0), 1)
         assert len(neighbors_1) == 2
 
-        neighbors_2 = self.space.get_neighbors((40, -10), 10)
+        neighbors_2 = self.space.get_neighbors((40, -10, 0), 10)
         assert len(neighbors_2) == 0
 
-        neighbors_3 = self.space.get_neighbors((-30, -30), 10)
+        neighbors_3 = self.space.get_neighbors((-30, -30, 0), 10)
         assert len(neighbors_3) == 0
 
     def test_bounds(self) -> None:
@@ -212,7 +212,7 @@ class TestSpaceAgentMapping(unittest.TestCase):
         """
         Create a test space and populate with Mock Agents.
         """
-        self.space = ContinuousSpace(70, 50, False, -30, -30)
+        self.space = Continuous3dSpace((70, 50, 0), False, (-30, -30, 0))
         self.agents = []
         for i, pos in enumerate(REMOVAL_TEST_AGENTS):
             a = MockAgent(i, None)

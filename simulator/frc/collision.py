@@ -3,23 +3,27 @@ from typing import Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-def overlap(p1: NDArray[np.float64], p2: NDArray[np.float64], r1: float, r2: float) -> bool:
+R3 = Tuple[float, float, float]
+ROTATION: NDArray[np.float64] = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
+
+
+def overlap(p1: R3, p2: R3, r1: float, r2: float) -> bool:
     distance_vector = np.subtract(p1, p2)
     minimum_distance = r1 + r2
     distance_scalar = np.linalg.norm(distance_vector)
     return bool(distance_scalar < minimum_distance)
 
-def collide(p1: NDArray[np.float64], v1: NDArray[np.float64], m1: float, e1: float,
-            p2: NDArray[np.float64], v2: NDArray[np.float64], m2: float, e2: float) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+def collide(p1: R3, v1: R3, m1: float, e1: float,
+            p2: R3, v2: R3, m2: float, e2: float) -> Tuple[R3, R3]:
 
     # FIXME: max so that balls are bouncy but robots are not, this is clearly wrong
     e: float = max(e1, e2)
-    d: NDArray[np.float64] = np.subtract(p2, p1)
+    d: R3 = np.subtract(p2, p1)
 
-    unit_normal_vector: NDArray[np.float64] = np.divide(d, np.linalg.norm(d))
+    # TODO remove all linalg, it's slow
+    unit_normal_vector: R3 = np.divide(d, np.linalg.norm(d))
 
-    rot: NDArray[np.float64] = np.array([[0, -1], [1, 0]])
-    unit_tangent_vector: NDArray[np.float64] = np.dot(rot, unit_normal_vector)
+    unit_tangent_vector: R3 = np.dot(ROTATION, unit_normal_vector)
 
     normal_scalar_before_1: float = np.dot(v1, unit_normal_vector)
     tangent_scalar_1: float = np.dot(v1, unit_tangent_vector)
@@ -43,14 +47,14 @@ def collide(p1: NDArray[np.float64], v1: NDArray[np.float64], m1: float, e1: flo
         normal_scalar_after_2 = ( (normal_scalar_before_2 * (m2 - e * m1))
             + ((e + 1) * m1 * normal_scalar_before_1)) / (m1 + m2)
 
-    normal_vector_after_1: NDArray[np.float64] = np.multiply(normal_scalar_after_1, unit_normal_vector)
-    tangent_vector_after_1: NDArray[np.float64] = np.multiply(tangent_scalar_1, unit_tangent_vector)
+    normal_vector_after_1: R3 = np.multiply(normal_scalar_after_1, unit_normal_vector)
+    tangent_vector_after_1: R3 = np.multiply(tangent_scalar_1, unit_tangent_vector)
 
-    normal_vector_after_2: NDArray[np.float64] = np.multiply(normal_scalar_after_2, unit_normal_vector)
-    tangent_vector_after_2: NDArray[np.float64] = np.multiply(tangent_scalar_2, unit_tangent_vector)
+    normal_vector_after_2: R3 = np.multiply(normal_scalar_after_2, unit_normal_vector)
+    tangent_vector_after_2: R3 = np.multiply(tangent_scalar_2, unit_tangent_vector)
 
-    newv1: NDArray[np.float64] = np.add(normal_vector_after_1, tangent_vector_after_1)
-    newv2: NDArray[np.float64] = np.add(normal_vector_after_2, tangent_vector_after_2)
+    newv1: R3 = np.add(normal_vector_after_1, tangent_vector_after_1)
+    newv2: R3 = np.add(normal_vector_after_2, tangent_vector_after_2)
 
     return newv1, newv2
 
@@ -60,11 +64,11 @@ def collide(p1: NDArray[np.float64], v1: NDArray[np.float64], m1: float, e1: flo
 # that don't make sense.  so the objects can collide over and over.
 # the simplest fix i could think of is what the wall-collision thing does, which is
 # to just force the objects apart.
-def collide_pos(p1: NDArray[np.float64], m1: float, r1: float,
-                p2: NDArray[np.float64], m2: float, r2: float) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
-    d: NDArray[np.float64] = np.subtract(p2, p1)
+def collide_pos(p1: R3, m1: float, r1: float,
+                p2: R3, m2: float, r2: float) -> Tuple[R3, R3]:
+    d: R3 = np.subtract(p2, p1)
     d_scalar = np.linalg.norm(d)
-    unit_normal_vector: NDArray[np.float64] = np.divide(d, d_scalar)
+    unit_normal_vector: R3 = np.divide(d, d_scalar)
     min_distance: float = r1 + r2
     normal_vector_min_distance = np.multiply(min_distance + 0.001, unit_normal_vector)
     squish_vector = np.subtract(normal_vector_min_distance, d)
