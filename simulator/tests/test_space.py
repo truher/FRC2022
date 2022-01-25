@@ -1,9 +1,11 @@
+# pylint: disable=protected-access
 import unittest
+from typing import Any
 import random
 import numpy as np
-import pytest
+#import pytest
 
-from frc.space import ContinuousSpace
+from frc.space import ContinuousSpace # pylint: disable=import-error
 
 TEST_AGENTS = [(-20, -20), (-20, -20.05), (65, 18)]
 OUTSIDE_POSITIONS = [(70, 10), (30, 20), (100, 10)]
@@ -22,7 +24,7 @@ class MockAgent:
     Minimalistic agent for testing purposes.
     """
 
-    def __init__(self, unique_id, pos):
+    def __init__(self, unique_id: int, pos: Any) -> None:
         self.random = random.Random(0)
         self.unique_id = unique_id
         self.pos = pos
@@ -32,7 +34,7 @@ class TestSpaceToroidal(unittest.TestCase):
     Testing a toroidal continuous space.
     """
 
-    def setUp(self):
+    def setUp(self) -> None:
         """
         Create a test space and populate with Mock Agents.
         """
@@ -43,7 +45,7 @@ class TestSpaceToroidal(unittest.TestCase):
             self.agents.append(a)
             self.space.place_agent(a, pos)
 
-    def test_agent_positions(self):
+    def test_agent_positions(self) -> None:
         """
         Ensure that the agents are all placed properly.
         """
@@ -51,15 +53,16 @@ class TestSpaceToroidal(unittest.TestCase):
             a = self.agents[i]
             assert a.pos == pos
 
-    def test_agent_matching(self):
+    def test_agent_matching(self) -> None:
         """
         Ensure that the agents are all placed and indexed properly.
         """
         for i, agent in self.space._index_to_agent.items():
+            assert self.space._agent_points is not None
             assert agent.pos == tuple(self.space._agent_points[i, :])
             assert i == self.space._agent_to_index[agent]
 
-    def test_distance_calculations(self):
+    def test_distance_calculations(self) -> None:
         """
         Test toroidal distance calculations.
         """
@@ -78,7 +81,7 @@ class TestSpaceToroidal(unittest.TestCase):
         pos_7 = (21, -5)
         assert self.space.get_distance(pos_6, pos_7) == np.sqrt(49 ** 2 + 24 ** 2)
 
-    def test_heading(self):
+    def test_heading(self) -> None:
         pos_1 = (-30, -30)
         pos_2 = (70, 20)
         self.assertEqual((0, 0), self.space.get_heading(pos_1, pos_2))
@@ -87,7 +90,7 @@ class TestSpaceToroidal(unittest.TestCase):
         pos_2 = (-25, -25)
         self.assertEqual((10, 0), self.space.get_heading(pos_1, pos_2))
 
-    def test_neighborhood_retrieval(self):
+    def test_neighborhood_retrieval(self) -> None:
         """
         Test neighborhood retrieval
         """
@@ -100,7 +103,7 @@ class TestSpaceToroidal(unittest.TestCase):
         neighbors_3 = self.space.get_neighbors((-30, -30), 10)
         assert len(neighbors_3) == 1
 
-    def test_bounds(self):
+    def test_bounds(self) -> None:
         """
         Test positions outside of boundary
         """
@@ -125,7 +128,7 @@ class TestSpaceNonToroidal(unittest.TestCase):
     Testing a toroidal continuous space.
     """
 
-    def setUp(self):
+    def setUp(self) -> None:
         """
         Create a test space and populate with Mock Agents.
         """
@@ -136,7 +139,7 @@ class TestSpaceNonToroidal(unittest.TestCase):
             self.agents.append(a)
             self.space.place_agent(a, pos)
 
-    def test_agent_positions(self):
+    def test_agent_positions(self) -> None:
         """
         Ensure that the agents are all placed properly.
         """
@@ -144,15 +147,16 @@ class TestSpaceNonToroidal(unittest.TestCase):
             a = self.agents[i]
             assert a.pos == pos
 
-    def test_agent_matching(self):
+    def test_agent_matching(self) -> None:
         """
         Ensure that the agents are all placed and indexed properly.
         """
         for i, agent in self.space._index_to_agent.items():
+            assert self.space._agent_points is not None
             assert agent.pos == tuple(self.space._agent_points[i, :])
             assert i == self.space._agent_to_index[agent]
 
-    def test_distance_calculations(self):
+    def test_distance_calculations(self) -> None:
         """
         Test toroidal distance calculations.
         """
@@ -161,7 +165,7 @@ class TestSpaceNonToroidal(unittest.TestCase):
         pos_3 = (-30, -20)
         assert self.space.get_distance(pos_2, pos_3) == 107.70329614269008
 
-    def test_heading(self):
+    def test_heading(self) -> None:
         pos_1 = (-30, -30)
         pos_2 = (70, 20)
         self.assertEqual((100, 50), self.space.get_heading(pos_1, pos_2))
@@ -170,7 +174,7 @@ class TestSpaceNonToroidal(unittest.TestCase):
         pos_2 = (-25, -25)
         self.assertEqual((-90, 0), self.space.get_heading(pos_1, pos_2))
 
-    def test_neighborhood_retrieval(self):
+    def test_neighborhood_retrieval(self) -> None:
         """
         Test neighborhood retrieval
         """
@@ -183,7 +187,7 @@ class TestSpaceNonToroidal(unittest.TestCase):
         neighbors_3 = self.space.get_neighbors((-30, -30), 10)
         assert len(neighbors_3) == 0
 
-    def test_bounds(self):
+    def test_bounds(self) -> None:
         """
         Test positions outside of boundary
         """
@@ -204,7 +208,7 @@ class TestSpaceAgentMapping(unittest.TestCase):
     Testing a continuous space for agent mapping during removal.
     """
 
-    def setUp(self):
+    def setUp(self) -> None:
         """
         Create a test space and populate with Mock Agents.
         """
@@ -215,13 +219,14 @@ class TestSpaceAgentMapping(unittest.TestCase):
             self.agents.append(a)
             self.space.place_agent(a, pos)
 
-    def test_remove_first(self):
+    def test_remove_first(self) -> None:
         """
         Test removing the first entry
         """
         agent_to_remove = self.agents[0]
         self.space.remove_agent(agent_to_remove)
         for i, agent in self.space._index_to_agent.items():
+            assert self.space._agent_points is not None
             assert agent.pos == tuple(self.space._agent_points[i, :])
             assert i == self.space._agent_to_index[agent]
         assert agent_to_remove not in self.space._agent_to_index
@@ -229,13 +234,14 @@ class TestSpaceAgentMapping(unittest.TestCase):
         with self.assertRaises(Exception):
             self.space.remove_agent(agent_to_remove)
 
-    def test_remove_last(self):
+    def test_remove_last(self) -> None:
         """
         Test removing the last entry
         """
         agent_to_remove = self.agents[-1]
         self.space.remove_agent(agent_to_remove)
         for i, agent in self.space._index_to_agent.items():
+            assert self.space._agent_points is not None
             assert agent.pos == tuple(self.space._agent_points[i, :])
             assert i == self.space._agent_to_index[agent]
         assert agent_to_remove not in self.space._agent_to_index
@@ -243,13 +249,14 @@ class TestSpaceAgentMapping(unittest.TestCase):
         with self.assertRaises(Exception):
             self.space.remove_agent(agent_to_remove)
 
-    def test_remove_middle(self):
+    def test_remove_middle(self) -> None:
         """
         Test removing a middle entry
         """
         agent_to_remove = self.agents[3]
         self.space.remove_agent(agent_to_remove)
         for i, agent in self.space._index_to_agent.items():
+            assert self.space._agent_points is not None
             assert agent.pos == tuple(self.space._agent_points[i, :])
             assert i == self.space._agent_to_index[agent]
         assert agent_to_remove not in self.space._agent_to_index

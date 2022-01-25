@@ -1,19 +1,5 @@
-#import itertools
+from typing import Dict, List, Optional, Set, Tuple, Union
 import numpy as np
-from typing import (
-    Any,
-    Dict,
-#    Iterable,
-#    Iterator,
-    List,
-    Optional,
-    Set,
-#    Sequence,
-    Tuple,
-    Union,
-#    cast,
-#    overload,
-)
 from numpy.typing import NDArray
 from mesa.agent import Agent # type:ignore
 
@@ -87,8 +73,9 @@ class ContinuousSpace:
         """
         pos = self.torus_adj(pos)
         idx = self._agent_to_index[agent]
-        self._agent_points[idx, 0] = pos[0]
-        self._agent_points[idx, 1] = pos[1]
+        if self._agent_points is not None:
+            self._agent_points[idx, 0] = pos[0]
+            self._agent_points[idx, 1] = pos[1]
         agent.pos = pos
 
     def remove_agent(self, agent: Agent) -> None:
@@ -149,9 +136,9 @@ class ContinuousSpace:
         if self.torus:
             one = (one - self.center) % self.size
             two = (two - self.center) % self.size
-        heading = two - one
+        heading: NDArray[np.float64] = two - one
         if isinstance(pos_1, tuple):
-            heading = tuple(heading)
+            return (heading[0], heading[1])
         return heading
 
     def get_distance(self, pos_1: FloatCoordinate, pos_2: FloatCoordinate) -> float:
@@ -168,7 +155,7 @@ class ContinuousSpace:
         if self.torus:
             dx = min(dx, self.width - dx)
             dy = min(dy, self.height - dy)
-        return np.sqrt(dx * dx + dy * dy)
+        return float(np.sqrt(dx * dx + dy * dy))
 
     def torus_adj(self, pos: FloatCoordinate) -> FloatCoordinate:
         """Adjust coordinates to handle torus looping.
@@ -182,15 +169,13 @@ class ContinuousSpace:
         """
         if not self.out_of_bounds(pos):
             return pos
-        elif not self.torus:
+        if not self.torus:
             raise Exception("Point out of bounds, and space non-toroidal.")
-        else:
-            x = self.x_min + ((pos[0] - self.x_min) % self.width)
-            y = self.y_min + ((pos[1] - self.y_min) % self.height)
-            if isinstance(pos, tuple):
-                return (x, y)
-            else:
-                return np.array((x, y))
+        x = self.x_min + ((pos[0] - self.x_min) % self.width)
+        y = self.y_min + ((pos[1] - self.y_min) % self.height)
+        if isinstance(pos, tuple):
+            return (x, y)
+        return np.array((x, y))
 
     def out_of_bounds(self, pos: FloatCoordinate) -> bool:
         """Check if a point is out of bounds."""
