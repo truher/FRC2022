@@ -246,6 +246,43 @@ class Robot(Thing):
         self.slot1: Optional[Cargo] = None # TODO: just make this a list
         self.slot2: Optional[Cargo] = None
 
+    # override
+    @property
+    def pos(self) -> R3:
+        if self._pos is None:
+            return None
+        return (self._pos[0], self._pos[1], self.radius_m)
+
+    # override
+    @pos.setter
+    def pos(self, value: R3) -> None:
+        if value is None:
+            self._pos = None
+            return
+        if self._pos is None:
+            self._pos = [0, 0, 0]
+        self._pos[0] = value[0]
+        self._pos[1] = value[1]
+        self._pos[2] = self.radius_m
+
+    @property
+    def velocity(self) -> R3:
+        if self._velocity is None:
+            return None
+        return (self._velocity[0], self._velocity[1], 0)
+
+    @velocity.setter
+    def velocity(self, value: R3) -> None:
+        if value is None:
+            self._velocity = None
+            return
+        if self._velocity is None:
+            self._velocity = [0, 0, 0]
+        self._velocity[0] = value[0]
+        self._velocity[1] = value[1]
+        self._velocity[2] = 0
+
+
     def step(self) -> None:
         # pick up nearby balls TODO: make this a process that takes time
         for item in self.model.space.get_neighbors(self.pos, 0.75, False):
