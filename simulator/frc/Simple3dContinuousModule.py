@@ -22,7 +22,9 @@ class Simple3dCanvas(VisualizationElement): # type:ignore
         space_state = []
         for obj in model.schedule.agents:
             portrayal = self._portrayal_method(obj)
-            portrayal["x"] = obj.pos[0]
-            portrayal["y"] = obj.pos[1]
+            p = obj.pos
+            portrayal["x"] = p[0]
+            portrayal["y"] = p[1]
+            portrayal["z"] = p[2]
             space_state.append(portrayal)
         return space_state

@@ -14,7 +14,7 @@ class Continuous3dSpace:
     their position as an (x, y, z) tuple. This class uses a numpy array internally
     to store agent objects, to speed up neighborhood lookups.
 
-    The 3d version is similar to the 2d one but backwards compatible.
+    The 3d version is similar to the 2d one but not backwards compatible.
     """
 
     _grid = None
@@ -177,7 +177,7 @@ class Continuous3dSpace:
         if not self.out_of_bounds(pos):
             return pos
         if not self.torus:
-            raise Exception("Point out of bounds, and space non-toroidal.")
+            raise Exception(f"Point {pos} out of bounds, and space non-toroidal.")
         x = self.p_min[0] + ((pos[0] - self.p_min[0]) % self.width)
         y = self.p_min[1] + ((pos[1] - self.p_min[1]) % self.height)
         z = (0 if self.depth == 0
@@ -204,3 +204,73 @@ class Continuous3dSpace:
         if self.depth > 0 and z == self.p_max[2]:
             return True
         return False
+
+# Similar but simpler than above, no limit, no torus.
+class LimitlessContinuous3dSpace:
+    def __init__(self) -> None:
+        self._agent_points: Optional[NDArray[np.float64]] = None
+        self._index_to_agent: Dict[int, Agent] = {}
+        self._agent_to_index: Dict[Agent, int] = {}
+
+    def place_agent(self, agent: Agent, pos: FloatCoordinate) -> None:
+        if self._agent_points is None:
+            self._agent_points = np.array([pos])
+        else:
+            self._agent_points = np.append(self._agent_points, np.array([pos]), axis=0)
+        self._index_to_agent[self._agent_points.shape[0] - 1] = agent
+        self._agent_to_index[agent] = self._agent_points.shape[0] - 1
+        agent.pos = pos
+
+    def move_agent(self, agent: Agent, pos: FloatCoordinate) -> None:
+        idx = self._agent_to_index[agent]
+        if self._agent_points is not None:
+            self._agent_points[idx, 0] = pos[0]
+            self._agent_points[idx, 1] = pos[1]
+        agent.pos = pos
+
+    def remove_agent(self, agent: Agent) -> None:
+        if agent not in self._agent_to_index:
+            raise Exception("Agent does not exist in the space")
+        idx = self._agent_to_index[agent]
+        del self._agent_to_index[agent]
+        max_idx = max(self._index_to_agent.keys())
+        # Delete the agent's position and decrement the index/agent mapping
+        self._agent_points = np.delete(self._agent_points, idx, axis=0)
+        for a, index in self._agent_to_index.items():
+            if index > idx:
+                self._agent_to_index[a] = index - 1
+                self._index_to_agent[index - 1] = a
+        # The largest index is now redundant
+        del self._index_to_agent[max_idx]
+        agent.pos = None
+
+    def get_neighbors(
+        self, pos: FloatCoordinate, radius: float, include_center: bool = True
+    ) -> List[GridContent]:
+        deltas = np.abs(self._agent_points - np.array(pos))
+        dists = deltas[:, 0] ** 2 + deltas[:, 1] ** 2
+
+        (idxs,) = np.where(dists <= radius ** 2)
+        neighbors = [
+            self._index_to_agent[x] for x in idxs if include_center or dists[x] > 0
+        ]
+        return neighbors
+
+    def get_heading(
+        self, pos_1: FloatCoordinate, pos_2: FloatCoordinate
+    ) -> FloatCoordinate:
+        one: NDArray[np.float64] = np.array(pos_1)
+        two: NDArray[np.float64] = np.array(pos_2)
+        heading: NDArray[np.float64] = two - one
+        if isinstance(pos_1, tuple):
+            return (heading[0], heading[1], heading[2])
+        return heading
+
+    def get_distance(self, pos_1: FloatCoordinate, pos_2: FloatCoordinate) -> float:
+        x1, y1, z1 = pos_1
+        x2, y2, z2 = pos_2
+
+        dx = np.abs(x1 - x2)
+        dy = np.abs(y1 - y2)
+        dz = np.abs(z1 - z2)
+        return float(np.sqrt(dx * dx + dy * dy + dz * dz))

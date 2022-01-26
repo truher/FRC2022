@@ -17,7 +17,7 @@ def robot_draw(agent: Agent) -> Dict[Any, Any]:
         return {
             "Shape": "cargo",
             "color": agent.alliance.color,
-            "z": agent.z_m
+            #"z": agent.z_m
         }
     if isinstance(agent, Robot):
         #pylint: disable=no-member

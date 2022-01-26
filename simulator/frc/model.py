@@ -9,18 +9,19 @@ from .agent import Cargo, Obstacle, Robot
 from .alliance import Alliance
 from .collision import overlap
 from .delay import Delay
-from .space import Continuous3dSpace
+from .space import LimitlessContinuous3dSpace
 
 R3 = Tuple[float, float, float]
 
 X_MAX_M: float = 16.46
 Y_MAX_M: float = 8.23
+Z_MAX_M: float = 10
 
 class RobotFlockers(Model): # type:ignore
     def __init__(self) -> None:
         super().__init__()
         self.schedule = RandomActivation(self)
-        self.space = Continuous3dSpace((X_MAX_M, Y_MAX_M, 0), False) # 16x8 meters, not toroidal
+        self.space = LimitlessContinuous3dSpace()
         self.make_agents()
         # datacollector member is needed for charts
         self.datacollector = DataCollector(
@@ -154,8 +155,8 @@ class RobotFlockers(Model): # type:ignore
         # red robots
         for i in range(0, 3):
             while True: # avoid overlap
-                x = self.space.p_max[0] / 2 + 2 + self.random.random() * (self.space.p_max[0]/2 - 3)
-                y = 1 + self.random.random() * (self.space.p_max[1] - 2)
+                x = X_MAX_M / 2 + 2 + self.random.random() * (X_MAX_M/2 - 3)
+                y = 1 + self.random.random() * (Y_MAX_M - 2)
                 pos: R3 = (x, y, 0)
                 if not self.is_overlapping(pos, 0.5):
                     break
@@ -164,8 +165,8 @@ class RobotFlockers(Model): # type:ignore
         # blue robots
         for i in range(10, 13):
             while True: # avoid overlap
-                x = 1 + self.random.random() * (self.space.p_max[0]/2 - 3)
-                y = 1 + self.random.random() * (self.space.p_max[1] - 2)
+                x = 1 + self.random.random() * (X_MAX_M/2 - 3)
+                y = 1 + self.random.random() * (Y_MAX_M - 2)
                 pos = (x, y, 0)
                 if not self.is_overlapping(pos, 0.5):
                     break
@@ -174,8 +175,8 @@ class RobotFlockers(Model): # type:ignore
         # red cargo
         for i in range(100,111):
             while True: # avoid overlap
-                x = 1 + self.random.random() * (self.space.p_max[0] - 2)
-                y = 1 + self.random.random() * (self.space.p_max[1] - 2)
+                x = 1 + self.random.random() * (X_MAX_M - 2)
+                y = 1 + self.random.random() * (Y_MAX_M - 2)
                 pos = (x, y, 0)
                 if not self.is_overlapping(pos, 0.12):
                     break
@@ -184,8 +185,8 @@ class RobotFlockers(Model): # type:ignore
         # blue cargo
         for i in range(200,211):
             while True: # avoid overlap
-                x = 1 + self.random.random() * (self.space.p_max[0] - 2)
-                y = 1 + self.random.random() * (self.space.p_max[1] - 2)
+                x = 1 + self.random.random() * (X_MAX_M - 2)
+                y = 1 + self.random.random() * (Y_MAX_M - 2)
                 pos = (x, y, 0)
                 if not self.is_overlapping(pos, 0.12):
                     break
@@ -210,25 +211,19 @@ class RobotFlockers(Model): # type:ignore
         bc: Optional[Cargo] = self.blue_terminal.get(self.model_time)
         if bc is not None:
             bc.velocity = (2, -2, 0)
-            bc.vz_m_s = 0
-            bc.z_m = 1.57
-            self.space.place_agent(bc, (2, Y_MAX_M - 2, 0))
+            self.space.place_agent(bc, (2, Y_MAX_M - 2, 1.57))
             self.schedule.add(bc)
         rc: Optional[Cargo] = self.red_terminal.get(self.model_time)
         if rc is not None:
             rc.velocity = (-2, 2, 0)
-            rc.vz_m_s = 0
-            rc.z_m = 1.57
-            self.space.place_agent(rc, (X_MAX_M - 2, 2, 0))
+            self.space.place_agent(rc, (X_MAX_M - 2, 2, 1.57))
             self.schedule.add(rc)
         oc: Optional[Cargo] = self.out_of_bounds.get(self.model_time)
         if oc is not None:
             # TODO: re-enter somewhere close to where you went out
             # FIXME for now just duplicate one of the terminals
             oc.velocity = (-2, 2, 0)
-            oc.vz_m_s = 0
-            oc.z_m = 1.57
-            self.space.place_agent(oc, (X_MAX_M - 2, 2, 0))
+            self.space.place_agent(oc, (X_MAX_M - 2, 2, 1.57))
             self.schedule.add(oc)
 
         self.schedule.step()
@@ -252,9 +247,8 @@ class CalV(RobotFlockers):
     #override
     def make_agents(self) -> None:
         # one ball in the air, to test gravity
-        pos: R3 = (1, 1, 0)
+        pos: R3 = (1, 1, 2)
         cargo = Cargo(0, self, pos, Alliance.BLUE)
         cargo.velocity = (0, 0, 0)
-        cargo.z_m = 2 # 1 meter
         self.space.place_agent(cargo, pos)
         self.schedule.add(cargo)

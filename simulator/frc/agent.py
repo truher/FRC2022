@@ -36,16 +36,14 @@ class Thing(Agent): # type:ignore
     ) -> None:
         super().__init__(unique_id, model)
         # TODO: remove pos, place_agent does it.
-        self._pos: RN = [0, 0, 0] # mutable
+        self._pos: RN = [0, 0, 0] # pos in meters, mutable
         self._pos[0] = pos[0]
         self._pos[1] = pos[1]
         self._pos[2] = pos[2]
         self.radius_m: float = 0
         self.mass_kg: float = 0
         self.elasticity = elasticity
-        self._velocity: RN = [0, 0, 0] # mutable
-        self.z_m: float = 0
-        self.vz_m_s: float = 0
+        self._velocity: RN = [0, 0, 0] # velocity in m/s, mutable
 
     @property
     def pos(self) -> R3:
@@ -92,24 +90,27 @@ class Thing(Agent): # type:ignore
         dv0 = self._velocity[0] * self.model.seconds_per_step
         dv1 = self._velocity[1] * self.model.seconds_per_step
         dv2 = self._velocity[2] * self.model.seconds_per_step
+
         self._pos[0] += dv0
         self._pos[1] += dv1
         self._pos[2] += dv2
+
+        # TODO: replace these collisions with real ones
         if self._pos[0] <= self.radius_m:
             self._pos[0] = self.radius_m
         elif self._pos[0] >= (x2_bound := (size_x - self.radius_m)):
             self._pos[0] = x2_bound
+
         if self._pos[1] <= self.radius_m:
             self._pos[1] = self.radius_m
         elif self._pos[1] >= (y2_bound := (size_y - self.radius_m)):
             self._pos[1] = y2_bound
+
+        if self._pos[2] < 0:
+            self._velocity[2] = -self._velocity[2] * VERTICAL_ELASTICITY
+            self._pos[2] = 0
+
         self.model.space.move_agent(self, self._pos)
-        # update z
-        self.z_m += self.vz_m_s * self.model.seconds_per_step
-        # don't go through the floor
-        if self.z_m < 0:
-            self.vz_m_s = -self.vz_m_s * VERTICAL_ELASTICITY
-            self.z_m = 0
 
     def is_colliding(self, other: Thing) -> bool:
         return overlap(other.pos, self.pos, other.radius_m, self.radius_m)
@@ -118,37 +119,38 @@ class Thing(Agent): # type:ignore
         out = False
         if self._pos[0] <= self.radius_m:
             # blue wall 197cm high
-            if self.z_m > END_WALL_HEIGHT_M:
+            if self._pos[2] > END_WALL_HEIGHT_M:
                 out = True
             self._pos[0] = self.radius_m
             self._velocity[0] = -self._velocity[0] * self.elasticity
         elif self._pos[0] >= (x2_bound := (size_x - self.radius_m)):
             # red wall 197cm high
-            if self.z_m > END_WALL_HEIGHT_M:
+            if self._pos[2] > END_WALL_HEIGHT_M:
                 out = True
             self._pos[0] = x2_bound
             self._velocity[0] = -self._velocity[0] * self.elasticity
         if self._pos[1] <= self.radius_m:
             # side wall 51cm high
-            if self.z_m > SIDE_WALL_HEIGHT_M:
+            if self._pos[2] > SIDE_WALL_HEIGHT_M:
                 out = True
             self._pos[1] = self.radius_m
             self._velocity[1] = -self._velocity[1] * self.elasticity
         elif self._pos[1] >= (y2_bound := (size_y - self.radius_m)):
             # side wall 51cm high
-            if self.z_m > SIDE_WALL_HEIGHT_M:
+            if self._pos[2] > SIDE_WALL_HEIGHT_M:
                 out = True
             self._pos[1] = y2_bound
             self._velocity[1] = -self._velocity[1] * self.elasticity
         if out:
+            print(f"{self.unique_id} out {self._pos}")
             self.model.space.remove_agent(self)
             self.model.schedule.remove(self)
             self.model.out_of_bounds.put(self, self.model.model_time)
             return
         # bounce off the floor
-        if self.z_m < 0:
-            self.z_m = 0
-            self.vz_m_s = -self.vz_m_s * VERTICAL_ELASTICITY
+        if self._pos[2] < 0:
+            self._pos[2] = 0
+            self._velocity[2] = -self._velocity[2] * VERTICAL_ELASTICITY
 
     def check_ball_collision(self, other: Thing) -> bool: # if actually colliding
         if isinstance(self, Obstacle) and isinstance(other, Obstacle):
@@ -157,7 +159,7 @@ class Thing(Agent): # type:ignore
             return False
         # balls above robots don't collide (with each other either)
         # TODO: handle the hub case separately
-        if self.z_m > 1.32 or other.z_m > 1.32:
+        if self.pos[2] > 1.32 or other.pos[2] > 1.32:
             return False
         selfv, otherv = collide(
             self.pos, self.velocity, self.mass_kg, self.elasticity,
@@ -203,7 +205,7 @@ class Cargo(Thing):
 
     def update_velocity_for_rolling_friction(self) -> None:
         # balls in the air aren't affected by rolling friction
-        if self.z_m > 0.01:
+        if self._pos[2] > 0.01:
             return
         accel = GRAVITY_M_S_S * ROLLING_FRICTION_COEFFICIENT
         dv = accel * self.model.seconds_per_step # delta v during this step
@@ -216,7 +218,7 @@ class Cargo(Thing):
 
     # TODO: also air resistance
     def update_v_z_for_gravity(self) -> None:
-        self.vz_m_s -= GRAVITY_M_S_S * self.model.seconds_per_step
+        self._velocity[2] -= GRAVITY_M_S_S * self.model.seconds_per_step
 
     def step(self) -> None:
         collided = False # don't try to apply any other forces in collisions
@@ -229,8 +231,8 @@ class Cargo(Thing):
             self.update_velocity_for_rolling_friction()
             self.update_v_z_for_gravity()
         # do this regardless because walls are absolute
-        self.check_wall_collision(self.model.space.width, self.model.space.height)
-        self.update_pos_for_velocity(self.model.space.width, self.model.space.height)
+        self.check_wall_collision(X_MAX_M, Y_MAX_M)
+        self.update_pos_for_velocity(X_MAX_M, Y_MAX_M)
 
 class Robot(Thing):
     def __init__(self, unique_id: int, model: 'Model', # type: ignore
@@ -249,7 +251,7 @@ class Robot(Thing):
         for item in self.model.space.get_neighbors(self.pos, 0.75, False):
             if isinstance(item, Cargo):
                 # can only pick up balls that are close to the floor
-                if item.z_m > 0.4:
+                if item.pos[2] > 0.4:
                     continue
                 if self.slot1 is None:
                     self.slot1 = item
@@ -275,17 +277,16 @@ class Robot(Thing):
             newpos = np.add(np.multiply(self.radius_m + 0.14, to_center_dir), self.pos)
         if self.slot1 is not None:
             self.slot1.velocity = velocity
-            self.slot1.vz_m_s = 7 # TODO: ballistics
+            self.slot1._velocity[2] = 7 # TODO: ballistics
             self.model.space.place_agent(self.slot1, newpos)
             self.model.schedule.add(self.slot1)
             self.slot1 = None
         elif self.slot2 is not None:
             self.slot2.velocity = velocity
-            self.slot2.vz_m_s = 7 # TODO: ballistics
+            self.slot2._velocity[2] = 7 # TODO: ballistics
             self.model.space.place_agent(self.slot2, newpos)
             self.model.schedule.add(self.slot2)
             self.slot2 = None
-
 
         collided = False # don't try to apply any other forces in collisions
         for other in self.model.space.get_neighbors(self.pos, 4, False): # 4m neighborhood
@@ -297,5 +298,5 @@ class Robot(Thing):
             v = np.random.normal(loc=0.00, scale=0.05, size=2)
             self._velocity[0] += v[0]
             self._velocity[1] += v[1]
-        self.check_wall_collision(self.model.space.width, self.model.space.height)
-        self.update_pos_for_velocity(self.model.space.width, self.model.space.height)
+        self.check_wall_collision(X_MAX_M, Y_MAX_M)
+        self.update_pos_for_velocity(X_MAX_M, Y_MAX_M)
