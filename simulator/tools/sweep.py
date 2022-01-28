@@ -9,9 +9,10 @@ import trajectory
 # simulate some ballistic paths to make a range-velocity-elevation guide
 
 SINGLE: bool = False
-MUZZLE_VELOCITY_MIN_M_S: float = 1
+#SINGLE: bool = True
+MUZZLE_VELOCITY_MIN_M_S: float = 5
 MUZZLE_VELOCITY_MAX_M_S: float = 20
-GUN_ELEVATION_MIN_DEGREES: float = 5
+GUN_ELEVATION_MIN_DEGREES: float = 35
 GUN_ELEVATION_MAX_DEGREES: float = 85
 
 def target(target_range_m: float) -> Any:
@@ -44,7 +45,7 @@ def run_single() -> List:
 def run_multi() -> List:
     # pylint: disable=consider-using-with
     # multi-processing
-    range_range: List = list(np.arange(constants.TARGET_MIN_RANGE_M, constants.TARGET_MAX_RANGE_M, 0.1))
+    range_range: List = list(np.arange(constants.TARGET_MIN_RANGE_M, constants.TARGET_MAX_RANGE_M, 1))
     p: Any = multiprocessing.Pool(processes=6,
                                   maxtasksperchild=100)
     return p.imap_unordered(sweep_gun, range_range)
@@ -59,45 +60,62 @@ def run_all() -> None:
     print(bff.to_csv())
     plot_results(bff)
 
-def plot_trajectory(target_range_m, df, summary) -> None:
-    df2 = target(target_range_m)
-    plt.scatter(df['x'],df['y'], label="trajectory")
-    plt.plot(df2['x'],df2['y'], label="target")
-    plt.title(summary)
-    plt.show()
-
+GUN_PRECISION = 0.01 # std dev of angle and velocity
 def sweep_gun(target_range_m) -> dict:
     min_energy_J: float = 1000
     best_v: float = 0
     best_el: float = 0
+    best_p_hit = 0
     for muzzle_velocity_m_s in np.arange(
-        MUZZLE_VELOCITY_MIN_M_S, MUZZLE_VELOCITY_MAX_M_S, 0.25):
+        MUZZLE_VELOCITY_MIN_M_S, MUZZLE_VELOCITY_MAX_M_S, 1):
         print(f"range {target_range_m} velocity {muzzle_velocity_m_s}")
         for gun_elevation_degrees in np.arange(GUN_ELEVATION_MIN_DEGREES,
-            GUN_ELEVATION_MAX_DEGREES, 0.25):
-            outcome, energy_J, df = trajectory.run(
-                target_range_m,
-                muzzle_velocity_m_s,
-                gun_elevation_degrees,
-                False # don't return each trajectory
-            )
+            GUN_ELEVATION_MAX_DEGREES, 1):
+            print(f"range {target_range_m} "
+                  f"velocity {muzzle_velocity_m_s} "
+                  f"elevation {gun_elevation_degrees}")
+            tries = 100
+            hits = 0
+            all_tries = [] # the trajectories
+            for i in range(tries):
+                actual_muzzle_velocity_m_s = muzzle_velocity_m_s * np.random.normal(1.0, GUN_PRECISION)
+                actual_gun_elevation_degrees = gun_elevation_degrees * np.random.normal(1.0, GUN_PRECISION)
+                outcome, energy_J, df = trajectory.run( # df is list of dicts
+                    target_range_m,
+                    actual_muzzle_velocity_m_s,
+                    actual_gun_elevation_degrees,
+                    True # don't return each trajectory
+                )
+                all_tries += df
+                if outcome == "hit":
+                    hits += 1
+            #print(f"hits {hits}")
+            if hits == 0:
+                #print("no hits")
+                continue
+            p_hit = hits/tries
             summary: str = (
                 f"range {target_range_m} "
                 f"velocity {muzzle_velocity_m_s} "
                 f"elevation {gun_elevation_degrees} "
                 f"arrival energy {energy_J:.2f} "
-                f"outcome {outcome}")
-            if outcome != "hit":
-                continue
+                f"p(hit) {p_hit}")
             print(summary)
-            if energy_J < min_energy_J:
+            if p_hit > best_p_hit:
                 print("new best")
                 min_energy_J = energy_J
                 best_v = muzzle_velocity_m_s
                 best_el = gun_elevation_degrees
-            if SINGLE: # don't need to plot each trajectory
-                plot_trajectory(target_range_m, df, summary)
-    return {'r': target_range_m, 'e': min_energy_J, 'v': best_v, 'l': best_el}
+                best_p_hit = p_hit
+            if SINGLE:
+                af = pd.DataFrame(all_tries)
+                df2 = target(target_range_m)
+                plt.scatter(af['x'],af['y'], label="trajectories", s=2)
+                plt.plot(df2['x'],df2['y'], label="target")
+                plt.title(summary)
+                plt.show()
+## FIXME
+    return {'r': target_range_m, 'e': best_p_hit, 'v': best_v, 'l': best_el}
 
 if __name__ == '__main__':
     # main is required to avoid mp deadlock

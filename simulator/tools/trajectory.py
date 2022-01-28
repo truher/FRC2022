@@ -49,25 +49,30 @@ def run(target_range_m: float, muzzle_velocity_m_s: float,
             df.append({'x':x_m, 'y':y_m})
 
         if vy_m_s < 0 and y_m + constants.BALL_RADIUS_M < constants.TARGET_HEIGHT_M:
-            return "miss", energy_J, pd.DataFrame(df) # below the target, heading down
+            # below the target, heading down
+            return "miss", energy_J, df
 
         if y_m < 0:
             # stop if you hit the ground
-            return "miss", energy_J, pd.DataFrame(df)
+            return "miss", energy_J, df
 
         if (x_m + constants.BALL_RADIUS_M > target_range_m - constants.TARGET_RADIUS_M and
             x_m - constants.BALL_RADIUS_M < target_range_m + constants.TARGET_RADIUS_M and
             y_m > constants.TARGET_HEIGHT_M - constants.BALL_RADIUS_M and
             y_m < constants.TARGET_HEIGHT_M + constants.BALL_RADIUS_M and vy_m_s >= 0):
-                # can't hit the target from below
-            return "miss", energy_J, pd.DataFrame(df)
+            # can't hit the target from below
+            return "miss", energy_J, df
 
         if ( x_m - constants.BALL_RADIUS_M > target_range_m - constants.TARGET_RADIUS_M and
             x_m + constants.BALL_RADIUS_M < target_range_m + constants.TARGET_RADIUS_M and
             y_m > constants.TARGET_HEIGHT_M and
             y_m < constants.TARGET_HEIGHT_M + constants.BALL_RADIUS_M and vy_m_s < 0):
             # intersect the target disc from the top
-            return "hit", energy_J, pd.DataFrame(df)
+            if is_captured(energy_J):
+                print("captured")
+                return "hit", energy_J, df
+            print("bounced out")
+            return "miss", energy_J, df
 
     return "miss", 0, df
 
