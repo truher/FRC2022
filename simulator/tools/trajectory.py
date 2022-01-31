@@ -69,9 +69,9 @@ def run(target_range_m: float, muzzle_velocity_m_s: float,
             y_m < constants.TARGET_HEIGHT_M + constants.BALL_RADIUS_M and vy_m_s < 0):
             # intersect the target disc from the top
             if is_captured(energy_J):
-                print("captured")
+                #print("captured")
                 return "hit", energy_J, df
-            print("bounced out")
+            #print("bounced out")
             return "miss", energy_J, df
 
     return "miss", 0, df
